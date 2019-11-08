@@ -1,4 +1,5 @@
 from django.db import models
+import datetime
 
 class Station(models.Model):
     xpos = models.FloatField(default=0.0)
@@ -6,7 +7,6 @@ class Station(models.Model):
 
 
 class Line(models.Model):
-    #is it sortable this way
     stations = models.ManyToManyField(
                             Station,
                             through='StationOrder')
@@ -14,22 +14,14 @@ class Line(models.Model):
 class StationOrder(models.Model):
     station = models.ForeignKey(Station, on_delete=models.CASCADE)
     line = models.ForeignKey(Line, on_delete=models.CASCADE)
-    order_num = models.IntegerField()
+    order_num = models.IntegerField(unique=True)
 
 class Service(models.Model):
     fee = models.IntegerField(default=1)
     line = models.ForeignKey(Line, on_delete=models.CASCADE)
-    
-
-class Timetable(models.Model):
-    service = models.OneToOneField(Service, on_delete=models.CASCADE)
 
 class TimetableData(models.Model):
-    timetable = models.ForeignKey(Timetable, on_delete=models.CASCADE)
-    #is the order of stations handled this way?
-    station_order = models.ForeignKey(StationOrder(), on_delete=models.CASCADE) #is cascade necessary here?
+    service = models.ForeignKey(Service, on_delete=models.CASCADE)
+    station_order = models.ForeignKey(StationOrder, on_delete=models.CASCADE)
     date_time = models.DateTimeField()
-
-class Delay(models.Model):
-    timetable = models.ForeignKey(Timetable, on_delete=models.CASCADE)
-    delay = models.TimeField()
+    delay = models.DurationField(default=datetime.timedelta)
