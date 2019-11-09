@@ -2,11 +2,13 @@ from django.db import models
 import datetime
 
 class Station(models.Model):
+    name = models.TextField(unique=True)
     xpos = models.FloatField(default=0.0)
     ypos = models.FloatField(default=0.0)
 
 
 class Line(models.Model):
+    name = models.TextField(unique=True)
     stations = models.ManyToManyField(
                             Station,
                             through='StationOrder')
@@ -14,7 +16,7 @@ class Line(models.Model):
 class StationOrder(models.Model):
     station = models.ForeignKey(Station, on_delete=models.CASCADE)
     line = models.ForeignKey(Line, on_delete=models.CASCADE)
-    order_num = models.IntegerField(unique=True)
+    order_num = models.IntegerField()
 
 class Service(models.Model):
     fee = models.IntegerField(default=1)
