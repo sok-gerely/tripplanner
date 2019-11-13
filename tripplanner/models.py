@@ -2,21 +2,22 @@ from django.db import models
 import datetime
 
 class Station(models.Model):
-    name = models.TextField(unique=True)
-    xpos = models.FloatField(default=0.0)
-    ypos = models.FloatField(default=0.0)
-
+    name = models.CharField(max_length=30)
+    
+    def __str__(self):
+        return self.name
 
 class Line(models.Model):
-    name = models.TextField(unique=True)
-    stations = models.ManyToManyField(
-                            Station,
-                            through='StationOrder')
-                            
+    name = models.CharField(max_length=30)
+    
+    def __str__(self):
+        return self.name
+                        
 class StationOrder(models.Model):
-    station = models.ForeignKey(Station, on_delete=models.CASCADE)
+    station_from = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='from+')
+    station_to = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='to+')
     line = models.ForeignKey(Line, on_delete=models.CASCADE)
-    order_num = models.IntegerField()
+    distance = models.IntegerField()
 
 class Service(models.Model):
     fee = models.IntegerField(default=1)
@@ -24,6 +25,6 @@ class Service(models.Model):
 
 class TimetableData(models.Model):
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
-    station_order = models.ForeignKey(StationOrder, on_delete=models.CASCADE)
+    station = models.ForeignKey(Station, on_delete=models.CASCADE)
     date_time = models.DateTimeField()
     delay = models.DurationField(default=datetime.timedelta)
