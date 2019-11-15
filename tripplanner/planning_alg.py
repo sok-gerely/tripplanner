@@ -8,23 +8,9 @@ def plan():
     start_name = 'A'
     destination_name = 'D'
     start = Station.objects.get(name=start_name)
-    Q = list(Station.objects.all())
-    dist = defaultdict(lambda: inf)
-    prev = defaultdict(None)
-    dist[start] = 0
-
-    # return get_Q_min_dist(Q, dist)
-    while len(Q) != 0:
-        u = get_Q_min_dist(Q, dist)
-        Q.remove(u)
-
-        for v, w in get_neighbors(u):
-            alt = dist[u] + w
-            if alt < dist[v]:
-                dist[v] = alt
-                prev[v] = u
-
     destination = Station.objects.get(name=destination_name)
+
+    dist, prev = dijkstra(start)
     route = [destination]
     while True:
         u = prev[route[-1]]
@@ -34,6 +20,23 @@ def plan():
     route.reverse()
 
     return dist[destination], route
+
+
+def dijkstra(start):
+    Q = list(Station.objects.all())
+    dist = defaultdict(lambda: inf)
+    prev = defaultdict(None)
+    dist[start] = 0
+    while len(Q) != 0:
+        u = get_Q_min_dist(Q, dist)
+        Q.remove(u)
+
+        for v, w in get_neighbors(u):
+            alt = dist[u] + w
+            if alt < dist[v]:
+                dist[v] = alt
+                prev[v] = u
+    return dist, prev
 
 
 def get_Q_min_dist(Q, dist):
