@@ -7,10 +7,11 @@ from tripplanner.models import *
 def plan():
     start_name = 'A'
     destination_name = 'D'
+    start = Station.objects.get(name=start_name)
     Q = list(Station.objects.all())
     dist = defaultdict(lambda: inf)
     prev = defaultdict(None)
-    dist[Station.objects.get(name=start_name)] = 0
+    dist[start] = 0
 
     # return get_Q_min_dist(Q, dist)
     while len(Q) != 0:
@@ -22,16 +23,17 @@ def plan():
             if alt < dist[v]:
                 dist[v] = alt
                 prev[v] = u
-    print('dist')
-    print(dist)
-    print('prev')
-    print(prev)
-    return dist, prev
-    # print(type(Q))
-    # return Q
-    # return start
-    # return StationOrder.objects.filter(station_from=start)
-    # return StationOrder.objects.filter(station_from__name=start_name)
+
+    destination = Station.objects.get(name=destination_name)
+    route = [destination]
+    while True:
+        u = prev[route[-1]]
+        route.append(u)
+        if u == start:
+            break
+    route.reverse()
+
+    return dist[destination], route
 
 
 def get_Q_min_dist(Q, dist):
@@ -47,6 +49,3 @@ def get_Q_min_dist(Q, dist):
 def get_neighbors(u):
     return [(station_order.station_to, station_order.distance) for station_order in
             StationOrder.objects.filter(station_from=u)]
-
-
-# def edge_weight(u, v):
