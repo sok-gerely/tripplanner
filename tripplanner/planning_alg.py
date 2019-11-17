@@ -57,3 +57,11 @@ class Dijkstra:
 def get_neighbors_distance(u):
     return [(station_order.station_to, station_order.distance) for station_order in
             StationOrder.objects.filter(station_from=u)]
+
+
+def get_neighbors_dost(u):
+    pass
+
+
+def get_neighbors_time(u):
+    pass
