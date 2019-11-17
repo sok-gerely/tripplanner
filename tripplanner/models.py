@@ -31,7 +31,11 @@ class Service(models.Model):
     line = models.ForeignKey(Line, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'{self.line} ({self.timetabledata_set.order_by("date_time")[0].date_time}): {self.fee}'
+        date_times = self.timetabledata_set.order_by("date_time")
+        if len(date_times) > 0:
+            return f'{self.line} ({date_times[0].date_time}): {self.fee}'
+        else:
+            return f'{self.line} (): {self.fee}'
 
 
 class TimetableData(models.Model):
