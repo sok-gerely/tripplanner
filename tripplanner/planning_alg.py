@@ -1,5 +1,6 @@
 from math import inf
 from collections import defaultdict
+import datetime
 
 from tripplanner.models import *
 
@@ -7,20 +8,21 @@ from tripplanner.models import *
 def plan():
     start_name = 'A'
     destination_name = 'D'
-    start = Station.objects.get(name=start_name)
-    destination = Station.objects.get(name=destination_name)
+    start_time = datetime.time(10, 0, 0, 0)
+    start_station = Station.objects.get(name=start_name)
+    destination_station = Station.objects.get(name=destination_name)
 
     dijkstra = Dijkstra(get_neighbors_distance)
-    dist, prev = dijkstra(start)
-    route = [destination]
+    dist, prev, time, line = dijkstra(start_station.id, start_time)
+    route = [destination_station.id]
     while True:
         u = prev[route[-1]]
         route.append(u)
-        if u == start:
+        if u == start_station.id:
             break
     route.reverse()
 
-    return dist[destination], route
+    return zip([(Station.objects.values_list('name', flat=True).get(id=r), time[r]) for r in route], [line[r] for r in route[1:]] + [None, ])
 
 
 class Dijkstra:
@@ -28,21 +30,29 @@ class Dijkstra:
         super().__init__()
         self.get_neighbors = get_neighbors
 
-    def __call__(self, start):
-        Q = list(Station.objects.all())
+    def __call__(self, start_station, start_time):
+        Q = list(Station.objects.values_list('id', flat=True))
         dist = defaultdict(lambda: inf)
+        time = defaultdict(lambda: inf)
         prev = defaultdict(None)
-        dist[start] = 0
+        line = defaultdict(None)
+        dist[start_station] = 0
+        time[start_station] = start_time
         while len(Q) != 0:
             u = self.get_Q_min_dist(Q, dist)
+            if u is None:
+                break
             Q.remove(u)
 
-            for v, w in self.get_neighbors(u):
-                alt = dist[u] + w
+            neighbors = self.get_neighbors(u, time[u])
+            for v, d, l, t in neighbors:
+                alt = dist[u] + d
                 if alt < dist[v]:
                     dist[v] = alt
                     prev[v] = u
-        return dist, prev
+                    time[v] = t
+                    line[v] = l
+        return dist, prev, time, line
 
     def get_Q_min_dist(self, Q, dist):
         min_d = inf
@@ -54,9 +64,9 @@ class Dijkstra:
         return min_u
 
 
-def get_neighbors_distance(u):
-    return [(station_order.station_to, station_order.distance) for station_order in
-            StationOrder.objects.filter(station_from=u)]
+def get_neighbors_distance(u, t):
+    return StationOrder.objects.filter(station_from=u, line__service__timetabledata__date_time__gt=t).values_list(
+        'station_to', 'distance', 'line__name', 'line__service__timetabledata__date_time')
 
 
 def get_neighbors_dost(u):
