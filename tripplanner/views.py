@@ -4,5 +4,5 @@ from tripplanner.planning_alg import plan
 
 
 def index(request):
-    d, route = plan()
-    return HttpResponse(', '.join(str(r) for r in route))
+    gen = plan()
+    return HttpResponse('<br>'.join(f'{l} {t} --> {a}, {s} - {f}' for a, s, t, l, f in gen))
