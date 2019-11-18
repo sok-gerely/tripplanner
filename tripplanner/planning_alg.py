@@ -1,9 +1,8 @@
 from math import inf
 from collections import defaultdict, namedtuple
+from dataclasses import dataclass
 import datetime
 from typing import Callable, List
-
-from django.db.models import Q
 
 from tripplanner.models import *
 
@@ -18,25 +17,36 @@ def plan():
     dijkstra = Dijkstra(get_neighbors_distance)
     # dijkstra = Dijkstra(get_neighbors_cost)
     # dijkstra = Dijkstra(get_neighbors_time)
-    dist, prev, time_leave_prev, time_arrive, line_prev = dijkstra(start_station.id, start_time)
+    dist, info = dijkstra(start_station.id, start_time)
     route = [destination_station.id]
     while True:
-        u = prev[route[-1]]
+        u = info[route[-1]].prev
         route.append(u)
         if u == start_station.id:
             break
     route.reverse()
 
-    time_arrive[start_station.id] = None
-    time_leave_prev[start_station.id] = None
-    line_prev[start_station.id] = None
-
-    return [(time_arrive[r], Station.objects.values_list('name', flat=True).get(id=r), time_leave_prev[r], line_prev[r]) for r in
-            route]
+    return [(info[r].time_arrive, Station.objects.values_list('name', flat=True).get(id=r), info[r].time_leave_prev,
+             info[r].line_prev, info[r].fee) for r in route]
 
 
-NeighbourResult = namedtuple('NeighbourResult',
-                             ['v', 'distance', 'line_name', 'u_leave_time', 'v_arrive_time'])  # TODO fee
+@dataclass
+class NeighbourResult:
+    v: int
+    distance: float
+    line_name: str
+    u_leave_time: datetime.time
+    v_arrive_time: datetime.time
+    fee: int
+
+
+@dataclass
+class RouteInfo:
+    prev: int
+    line_prev: str
+    time_leave_prev: datetime.time
+    time_arrive: datetime.time
+    fee: int
 
 
 class Dijkstra:
@@ -47,28 +57,28 @@ class Dijkstra:
     def __call__(self, start_station, start_time):
         Q = list(Station.objects.values_list('id', flat=True))
         dist = defaultdict(lambda: inf)
-        time_arrive = defaultdict(lambda: inf)
-        time_leave_prev = defaultdict(lambda: inf)
-        prev = defaultdict(None)
-        line_prev = defaultdict(None)
+        info = defaultdict(lambda: RouteInfo(None, None, None, None, None))
+
         dist[start_station] = 0
-        time_arrive[start_station] = start_time
+        info[start_station].time_arrive = start_time
+
         while len(Q) != 0:
             u = self.get_Q_min_dist(Q, dist)
             if u is None:
                 break
             Q.remove(u)
 
-            neighbors = self.get_neighbors(u, time_arrive[u])
+            neighbors = self.get_neighbors(u, info[u].time_arrive)
             for res in neighbors:
                 alt = dist[u] + res.distance
                 if alt < dist[res.v]:
                     dist[res.v] = alt
-                    prev[res.v] = u
-                    time_arrive[res.v] = res.v_arrive_time
-                    time_leave_prev[res.v] = res.u_leave_time
-                    line_prev[res.v] = res.line_name
-        return dist, prev, time_leave_prev, time_arrive, line_prev
+                    info[res.v].prev = u
+                    info[res.v].time_arrive = res.v_arrive_time
+                    info[res.v].time_leave_prev = res.u_leave_time
+                    info[res.v].line_prev = res.line_name
+                    info[res.v].fee = res.fee
+        return dist, info
 
     def get_Q_min_dist(self, Q, dist):
         min_d = inf
@@ -82,15 +92,15 @@ class Dijkstra:
 
 def get_neighbors_distance(u, t):
     station_service = StationOrder.objects.filter(station_from=u).values_list(
-        'station_to', 'distance', 'line__name', 'line__service')
+        'station_to', 'distance', 'line__name', 'line__service', 'line__service__fee')
 
     res = []
-    for v, distance, line__name, service in station_service:
+    for v, distance, line__name, service, fee in station_service:
         v_arrive_time = TimetableData.objects.get(service=service, station=v).date_time
         u_leave_time = TimetableData.objects.get(service=service, station=u).date_time
         if u_leave_time >= t:
             res.append(NeighbourResult(v=v, distance=distance, line_name=line__name,
-                                       u_leave_time=u_leave_time, v_arrive_time=v_arrive_time))
+                                       u_leave_time=u_leave_time, v_arrive_time=v_arrive_time, fee=fee))
     return res
 
 
@@ -99,28 +109,28 @@ def get_neighbors_cost(u, t):
         'station_to', 'line__service__fee', 'line__name', 'line__service')
 
     res = []
-    for v, distance, line__name, service in station_service:
+    for v, fee, line__name, service, fee in station_service:
         v_arrive_time = TimetableData.objects.get(service=service, station=v).date_time
         u_leave_time = TimetableData.objects.get(service=service, station=u).date_time
         if u_leave_time > t:
-            res.append(NeighbourResult(v=v, distance=distance, line_name=line__name,
-                                       u_leave_time=u_leave_time, v_arrive_time=v_arrive_time))
+            res.append(NeighbourResult(v=v, distance=fee, line_name=line__name,
+                                       u_leave_time=u_leave_time, v_arrive_time=v_arrive_time, fee=fee))
     return res
 
 
 def get_neighbors_time(u, t):
     station_service = StationOrder.objects.filter(station_from=u).values_list(
-        'station_to', 'line__name', 'line__service')
+        'station_to', 'line__name', 'line__service', 'line__service__fee')
 
     res = []
-    for v, line__name, service in station_service:
+    for v, line__name, service, fee in station_service:
         v_arrive_time = TimetableData.objects.get(service=service, station=v).date_time
         u_leave_time = TimetableData.objects.get(service=service, station=u).date_time
         if u_leave_time > t:
             seconds = int((time2datetime(v_arrive_time) - time2datetime(t)).total_seconds())
             res.append(NeighbourResult(v=v, distance=seconds,
                                        line_name=line__name,
-                                       u_leave_time=u_leave_time, v_arrive_time=v_arrive_time))
+                                       u_leave_time=u_leave_time, v_arrive_time=v_arrive_time, fee=fee))
     return res
 
 
