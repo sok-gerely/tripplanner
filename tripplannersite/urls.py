@@ -19,5 +19,6 @@ from tripplanner import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.index),
+    # path('', views.index),
+    path('<str:planning_mode>/<str:station_from_name>-<str:station_to_name>', views.index) # TODO: time
 ]
