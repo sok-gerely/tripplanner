@@ -9,7 +9,11 @@ from django.http import Http404
 from tripplanner.models import *
 
 
-def plan(planning_mode: str, station_from_name: str, station_to_name: str):
+class NoRouteExists(Exception):
+    pass
+
+
+def plan(planning_mode: str, start_time: datetime.time, station_from_name: str, station_to_name: str):
     if planning_mode == 'distance':
         get_neighbors = get_neighbors_distance
     elif planning_mode == 'cost':
@@ -19,12 +23,21 @@ def plan(planning_mode: str, station_from_name: str, station_to_name: str):
     else:
         raise Http404("URL doesn't exist!")
 
-    start_time = datetime.time(10, 0, 0, 0)
-    start_station = Station.objects.get(name=station_from_name)
-    destination_station = Station.objects.get(name=station_to_name)
+    # start_time = datetime.time(10, 0, 0, 0)
+    try:
+        start_station = Station.objects.get(name=station_from_name)
+    except Station.DoesNotExist:
+        raise Http404("Start station name is incorrect!")
+    try:
+        destination_station = Station.objects.get(name=station_to_name)
+    except Station.DoesNotExist:
+        raise Http404("Destination station name is incorrect!")
 
     dijkstra = Dijkstra(get_neighbors)
     dist, info = dijkstra(start_station.id, start_time)
+    if info[destination_station.id].time_arrive is None:
+        raise NoRouteExists()
+
     route = [destination_station.id]
     while True:
         u = info[route[-1]].prev
@@ -133,7 +146,7 @@ def get_neighbors_time(u, t):
     for v, line__name, service, fee in station_service:
         v_arrive_time = TimetableData.objects.get(service=service, station=v).date_time
         u_leave_time = TimetableData.objects.get(service=service, station=u).date_time
-        if u_leave_time > t:
+        if u_leave_time >= t:
             seconds = int((time2datetime(v_arrive_time) - time2datetime(t)).total_seconds())
             res.append(NeighbourResult(v=v, distance=seconds,
                                        line_name=line__name,
