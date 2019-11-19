@@ -139,7 +139,7 @@ def get_neighbors_cost(u, t):
     for v, fee, line__name, service in station_service:
         v_arrive_time = TimetableData.objects.get(service=service, station=v).date_time
         u_leave_time = TimetableData.objects.get(service=service, station=u).date_time
-        if u_leave_time > t:
+        if u_leave_time >= t:
             res.append(NeighbourResult(v=v, distance=fee, line_name=line__name,
                                        u_leave_time=u_leave_time, v_arrive_time=v_arrive_time, fee=fee))
     return res
