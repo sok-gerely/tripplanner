@@ -1,12 +1,9 @@
-from enum import Enum, auto
+from enum import Enum
 from math import inf
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from dataclasses import dataclass
 import datetime
 from typing import Callable, List
-
-from django.http import Http404
-from django.shortcuts import get_object_or_404
 
 from tripplanner.models import *
 
@@ -23,14 +20,17 @@ class PlanningMode(Enum):
     DISTANCE = 'distance'
     COST = 'cost'
     TIME = 'time'
+    # ATTENTION: If a new value is added, change get_weight_fnc
 
     def get_weight_fnc(self):
         if self == PlanningMode.DISTANCE:
             return get_neighbors_distance
-        if self == PlanningMode.COST:
+        elif self == PlanningMode.COST:
             return get_neighbors_cost
-        if self == PlanningMode.TIME:
+        elif self == PlanningMode.TIME:
             return get_neighbors_time
+        else:
+            raise NotImplementedError()
 
     def __str__(self):
         return self.value
