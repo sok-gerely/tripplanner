@@ -42,11 +42,11 @@ class TimetableData(models.Model):
     NORMAL = 'N'
     WEEKEND = 'W'
     HOLIDAY = 'H'
-    TYPE_CHOICHES = [(NORMAL, 'normal'),
-                     (WEEKEND, 'weekend'),
-                     (HOLIDAY, 'holiday')]
+    TYPE_CHOICES = [(NORMAL, 'normal'),
+                    (WEEKEND, 'weekend'),
+                    (HOLIDAY, 'holiday')]
 
-    type = models.CharField(max_length=1, choices=TYPE_CHOICHES, default=NORMAL)
+    type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=NORMAL)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
     station = models.ForeignKey(Station, on_delete=models.CASCADE)
     date_time = models.TimeField()
