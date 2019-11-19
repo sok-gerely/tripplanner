@@ -1,23 +1,50 @@
+from enum import Enum, auto
 from math import inf
 from collections import defaultdict, namedtuple
 from dataclasses import dataclass
 import datetime
 from typing import Callable, List
 
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+
 from tripplanner.models import *
 
 
-def plan():
-    start_name = 'A'
-    destination_name = 'D'
-    start_time = datetime.time(10, 0, 0, 0)
-    start_station = Station.objects.get(name=start_name)
-    destination_station = Station.objects.get(name=destination_name)
+class NoRouteExists(Exception):
+    pass
 
-    dijkstra = Dijkstra(get_neighbors_distance)
-    # dijkstra = Dijkstra(get_neighbors_cost)
-    # dijkstra = Dijkstra(get_neighbors_time)
+
+class StationsAreTheSame(Exception):
+    pass
+
+
+class PlanningMode(Enum):
+    DISTANCE = 'distance'
+    COST = 'cost'
+    TIME = 'time'
+
+    def get_weight_fnc(self):
+        if self == PlanningMode.DISTANCE:
+            return get_neighbors_distance
+        if self == PlanningMode.COST:
+            return get_neighbors_cost
+        if self == PlanningMode.TIME:
+            return get_neighbors_time
+
+    def __str__(self):
+        return self.value
+
+
+def plan(planning_mode: PlanningMode, start_time: datetime.time, start_station: Station, destination_station: Station):
+    if start_station == destination_station:
+        raise StationsAreTheSame()
+
+    dijkstra = Dijkstra(planning_mode.get_weight_fnc())
     dist, info = dijkstra(start_station.id, start_time)
+    if info[destination_station.id].time_arrive is None:
+        raise NoRouteExists()
+
     route = [destination_station.id]
     while True:
         u = info[route[-1]].prev
@@ -109,10 +136,10 @@ def get_neighbors_cost(u, t):
         'station_to', 'line__service__fee', 'line__name', 'line__service')
 
     res = []
-    for v, fee, line__name, service, fee in station_service:
+    for v, fee, line__name, service in station_service:
         v_arrive_time = TimetableData.objects.get(service=service, station=v).date_time
         u_leave_time = TimetableData.objects.get(service=service, station=u).date_time
-        if u_leave_time > t:
+        if u_leave_time >= t:
             res.append(NeighbourResult(v=v, distance=fee, line_name=line__name,
                                        u_leave_time=u_leave_time, v_arrive_time=v_arrive_time, fee=fee))
     return res
@@ -126,7 +153,7 @@ def get_neighbors_time(u, t):
     for v, line__name, service, fee in station_service:
         v_arrive_time = TimetableData.objects.get(service=service, station=v).date_time
         u_leave_time = TimetableData.objects.get(service=service, station=u).date_time
-        if u_leave_time > t:
+        if u_leave_time >= t:
             seconds = int((time2datetime(v_arrive_time) - time2datetime(t)).total_seconds())
             res.append(NeighbourResult(v=v, distance=seconds,
                                        line_name=line__name,
