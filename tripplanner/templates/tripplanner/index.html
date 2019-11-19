@@ -7,6 +7,11 @@
 <body>
 <form action="{% url 'redirect2result' %}" method="get">
 {#    {% csrf_token %}#}
+    <select name="planning_mode">
+        {% for mode in modes %}
+        <option value="{{ mode.value }}">{{ mode }}</option>
+        {% endfor %}
+    </select>
     <select name="start_station">
         {% for station in stations %}
         <option value="{{ station.name }}">{{ station.name }}</option>

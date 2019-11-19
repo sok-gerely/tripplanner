@@ -1,3 +1,4 @@
+from enum import Enum, auto
 from math import inf
 from collections import defaultdict, namedtuple
 from dataclasses import dataclass
@@ -5,6 +6,7 @@ import datetime
 from typing import Callable, List
 
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 
 from tripplanner.models import *
 
@@ -13,27 +15,32 @@ class NoRouteExists(Exception):
     pass
 
 
-def plan(planning_mode: str, start_time: datetime.time, station_from_name: str, station_to_name: str):
-    if planning_mode == 'distance':
-        get_neighbors = get_neighbors_distance
-    elif planning_mode == 'cost':
-        get_neighbors = get_neighbors_cost
-    elif planning_mode == 'time':
-        get_neighbors = get_neighbors_time
-    else:
-        raise Http404("URL doesn't exist!")
+class StationsAreTheSame(Exception):
+    pass
 
-    # start_time = datetime.time(10, 0, 0, 0)
-    try:
-        start_station = Station.objects.get(name=station_from_name)
-    except Station.DoesNotExist:
-        raise Http404("Start station name is incorrect!")
-    try:
-        destination_station = Station.objects.get(name=station_to_name)
-    except Station.DoesNotExist:
-        raise Http404("Destination station name is incorrect!")
 
-    dijkstra = Dijkstra(get_neighbors)
+class PlanningMode(Enum):
+    DISTANCE = 'distance'
+    COST = 'cost'
+    TIME = 'time'
+
+    def get_weight_fnc(self):
+        if self == PlanningMode.DISTANCE:
+            return get_neighbors_distance
+        if self == PlanningMode.COST:
+            return get_neighbors_cost
+        if self == PlanningMode.TIME:
+            return get_neighbors_time
+
+    def __str__(self):
+        return self.value
+
+
+def plan(planning_mode: PlanningMode, start_time: datetime.time, start_station: Station, destination_station: Station):
+    if start_station == destination_station:
+        raise StationsAreTheSame()
+
+    dijkstra = Dijkstra(planning_mode.get_weight_fnc())
     dist, info = dijkstra(start_station.id, start_time)
     if info[destination_station.id].time_arrive is None:
         raise NoRouteExists()
