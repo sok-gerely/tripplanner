@@ -21,6 +21,6 @@ app_name = 'tripplanner'
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name='index'),
-    path('<str:planning_mode_str>/<str:time_str>/<str:station_from_name>-<str:station_to_name>', views.result, name='result'),
+    path('<str:planning_mode_str>/<str:datetime_str>/<str:station_from_name>-<str:station_to_name>', views.result, name='result'),
     path('redirect2result', views.redirect2result, name='redirect2result')
 ]

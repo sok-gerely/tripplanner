@@ -7,17 +7,17 @@ from tripplanner.planning_alg import plan, NoRouteExists, StationsAreTheSame, Pl
 from tripplanner import models
 
 
-def result(request, planning_mode_str: str, time_str: str, station_from_name: str, station_to_name: str):
+def result(request, planning_mode_str: str, datetime_str: str, station_from_name: str, station_to_name: str):
     try:
         planning_mode = PlanningMode(planning_mode_str)
     except ValueError:
         raise Http404('Planning mode in not valid!')
     start_station = get_object_or_404(models.Station, name=station_from_name)
     destination_station = get_object_or_404(models.Station, name=station_to_name)
-    start_time = datetime.time.fromisoformat(time_str)
-    print(start_time)
+    start_datetime = datetime.datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M')
+    print(start_datetime)
     try:
-        gen = plan(planning_mode, start_time, start_station, destination_station)
+        gen = plan(planning_mode, start_datetime, start_station, destination_station)
     except NoRouteExists:
         return HttpResponse("Route doesn't exist")
     except StationsAreTheSame:
@@ -32,6 +32,6 @@ def index(request):
 
 
 def redirect2result(request):
-    return redirect(result, planning_mode_str=request.GET['planning_mode'], time_str=request.GET['time'],
+    return redirect(result, planning_mode_str=request.GET['planning_mode'], datetime_str=request.GET['datetime'],
                     station_from_name=request.GET['start_station'],
                     station_to_name=request.GET['destination_station'])

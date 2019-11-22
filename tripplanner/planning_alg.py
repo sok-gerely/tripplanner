@@ -6,6 +6,7 @@ import datetime
 from typing import Callable, List
 
 from tripplanner.models import *
+from tripplannersite.settings import CALENDAR
 
 
 class NoRouteExists(Exception):
@@ -20,6 +21,7 @@ class PlanningMode(Enum):
     DISTANCE = 'distance'
     COST = 'cost'
     TIME = 'time'
+
     # ATTENTION: If a new value is added, change get_weight_fnc
 
     def get_weight_fnc(self):
@@ -36,7 +38,8 @@ class PlanningMode(Enum):
         return self.value
 
 
-def plan(planning_mode: PlanningMode, start_time: datetime.time, start_station: Station, destination_station: Station):
+def plan(planning_mode: PlanningMode, start_time: datetime.datetime, start_station: Station,
+         destination_station: Station):
     if start_station == destination_station:
         raise StationsAreTheSame()
 
@@ -62,8 +65,8 @@ class NeighbourResult:
     v: int
     distance: float
     line_name: str
-    u_leave_time: datetime.time
-    v_arrive_time: datetime.time
+    u_leave_time: datetime.datetime
+    v_arrive_time: datetime.datetime
     fee: int
 
 
@@ -71,8 +74,8 @@ class NeighbourResult:
 class RouteInfo:
     prev: int
     line_prev: str
-    time_leave_prev: datetime.time
-    time_arrive: datetime.time
+    time_leave_prev: datetime.datetime
+    time_arrive: datetime.datetime
     fee: int
 
 
@@ -81,7 +84,7 @@ class Dijkstra:
         super().__init__()
         self.get_neighbors: Callable[[int, datetime.time], List[NeighbourResult]] = get_neighbors
 
-    def __call__(self, start_station, start_time):
+    def __call__(self, start_station: int, start_time: datetime.datetime):
         Q = list(Station.objects.values_list('id', flat=True))
         dist = defaultdict(lambda: inf)
         info = defaultdict(lambda: RouteInfo(None, None, None, None, None))
@@ -117,21 +120,49 @@ class Dijkstra:
         return min_u
 
 
-def get_neighbors_distance(u, t):
+def is_weekend(t: datetime.datetime):
+    return t.weekday() >= 5
+
+
+def is_holiday(t: datetime.datetime):
+    return t in CALENDAR
+
+
+def datetime2TimetableData_TYPE(t: datetime.datetime):
+    if is_weekend(t):
+        return TimetableData.WEEKEND
+    elif is_holiday(t):
+        return TimetableData.HOLIDAY
+    else:
+        return TimetableData.NORMAL
+
+
+def get_neighbors_distance(u, t: datetime.datetime):
     station_service = StationOrder.objects.filter(station_from=u).values_list(
         'station_to', 'distance', 'line__name', 'line__service', 'line__service__fee')
 
     res = []
     for v, distance, line__name, service, fee in station_service:
-        v_arrive_time = TimetableData.objects.get(service=service, station=v).date_time
-        u_leave_time = TimetableData.objects.get(service=service, station=u).date_time
-        if u_leave_time >= t:
-            res.append(NeighbourResult(v=v, distance=distance, line_name=line__name,
-                                       u_leave_time=u_leave_time, v_arrive_time=v_arrive_time, fee=fee))
+        query_t = t
+        while True:
+            timetabledata_type = datetime2TimetableData_TYPE(query_t)
+            get_station_datetime = lambda s: \
+                datetime.datetime.combine(query_t.date(),
+                                          TimetableData.objects.get(service=service, station=s,
+                                                                    type=timetabledata_type).date_time)
+            try:
+                v_arrive_time = get_station_datetime(v)
+                u_leave_time = get_station_datetime(u)
+                if u_leave_time >= t:
+                    res.append(NeighbourResult(v=v, distance=distance, line_name=line__name,
+                                               u_leave_time=u_leave_time, v_arrive_time=v_arrive_time, fee=fee))
+                    break
+            except TimetableData.DoesNotExist:
+                query_t = (query_t + datetime.timedelta(days=1)).replace(hour=0, minute=0, microsecond=0)
     return res
 
 
-def get_neighbors_cost(u, t):
+def get_neighbors_cost(u, t: datetime.datetime):
     station_service = StationOrder.objects.filter(station_from=u).values_list(
         'station_to', 'line__service__fee', 'line__name', 'line__service')
 
@@ -145,7 +176,7 @@ def get_neighbors_cost(u, t):
     return res
 
 
-def get_neighbors_time(u, t):
+def get_neighbors_time(u, t: datetime.datetime):
     station_service = StationOrder.objects.filter(station_from=u).values_list(
         'station_to', 'line__name', 'line__service', 'line__service__fee')
 
