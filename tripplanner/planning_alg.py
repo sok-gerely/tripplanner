@@ -157,6 +157,8 @@ def get_neighbors_distance(u, t: datetime.datetime):
                     res.append(NeighbourResult(v=v, distance=distance, line_name=line__name,
                                                u_leave_time=u_leave_time, v_arrive_time=v_arrive_time, fee=fee))
                     break
+                else:
+                    raise TimetableData.DoesNotExist
             except TimetableData.DoesNotExist:
                 query_t = (query_t + datetime.timedelta(days=1)).replace(hour=0, minute=0, microsecond=0)
     return res
