@@ -29,6 +29,17 @@ class StationOrder(models.Model):
 class Service(models.Model):
     fee = models.IntegerField(default=1)
     line = models.ForeignKey(Line, on_delete=models.CASCADE)
+    valid_from = models.DateField(default=datetime.date.today)
+    valid_until = models.DateField(default=datetime.date.today)
+    NORMAL = 'N'
+    WEEKEND = 'W'
+    HOLIDAY = 'H'
+    TYPE_CHOICES = [(NORMAL, 'normal'),
+                    (WEEKEND, 'weekend'),
+                    (HOLIDAY, 'holiday')]
+
+    type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=NORMAL)
+
 
     def __str__(self):
         date_times = self.timetabledata_set.order_by("date_time")
@@ -39,18 +50,17 @@ class Service(models.Model):
 
 
 class TimetableData(models.Model):
-    NORMAL = 'N'
-    WEEKEND = 'W'
-    HOLIDAY = 'H'
-    TYPE_CHOICES = [(NORMAL, 'normal'),
-                    (WEEKEND, 'weekend'),
-                    (HOLIDAY, 'holiday')]
-
-    type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=NORMAL)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
     station = models.ForeignKey(Station, on_delete=models.CASCADE)
     date_time = models.TimeField()
-    delay = models.DurationField(default=datetime.timedelta)
 
     def __str__(self):
         return f'{self.service.line} ({self.station}): {self.date_time}'
+
+class Delay(models.Model):
+    timetable = models.ForeignKey(TimetableData, on_delete=models.CASCADE)
+    delay = models.DurationField(default=datetime.timedelta)
+    date = models.DateField(default=datetime.date.today)
+
+    def __str__(self):
+        return f'{self.timetable} ({self.date}): {self.delay}'
