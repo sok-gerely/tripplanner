@@ -28,9 +28,18 @@ class Line(models.Model):
         for service in services:
             service.update_timetables(self.station_list)
 
+    def del_update_services(self):
+        services = Service.objects.filter(line=self).all()
+        for service in services:
+            service.check_to_delete(self.station_list)
+
     def update(self):
         self.update_station_list()
         self.update_services()
+
+    def deletion_update(self):
+        self.update_station_list()
+        self.del_update_services()
 
     def __str__(self):
         return self.name
@@ -50,7 +59,7 @@ class StationOrder(models.Model):
 
     def delete(self, *args, **kwargs):
         super().delete(*args,**kwargs)
-        self.line.update()
+        self.line.deletion_update()
 
     def __str__(self):
         return f'{self.station_from} -> {self.station_to};'
@@ -82,14 +91,13 @@ class Service(models.Model):
                 TimetableData.objects.filter(id=tt_id).delete()
 
     def update_timetables(self,compare_stations):
-        self.check_to_delete(comp_stations=compare_stations)
         for temp_station in compare_stations:
-                tts = TimetableData.objects.filter(service=self,station=Station.objects.get(pk=temp_station)).all()
-                if not tts:
-                    TimetableData.objects.create_timetable(service=self,station=Station.objects.get(pk=temp_station),station_num=len(compare_stations))
-                else:
-                    for tt in tts:
-                        tt.station_num = len(compare_stations)
+            tts = TimetableData.objects.filter(service=self,station=Station.objects.get(pk=temp_station)).all()
+            if not tts:
+                TimetableData.objects.create_timetable(service=self,station=Station.objects.get(pk=temp_station),station_num=len(compare_stations))
+            else:
+                for tt in tts:
+                    tt.station_num = len(compare_stations)
 
 
     def __str__(self):
