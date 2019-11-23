@@ -2,8 +2,8 @@ from enum import Enum
 from math import inf
 from collections import defaultdict
 from dataclasses import dataclass
-import datetime
-from typing import Callable, List
+import pandas as pd
+from typing import Callable
 
 from tripplanner.models import *
 from tripplannersite.settings import CALENDAR
@@ -56,8 +56,13 @@ def plan(planning_mode: PlanningMode, start_time: datetime.datetime, start_stati
             break
     route.reverse()
 
-    return [(info[r].time_arrive, Station.objects.values_list('name', flat=True).get(id=r), info[r].time_leave_prev,
-             info[r].line_prev, info[r].fee) for r in route]
+    df = pd.DataFrame(
+        data=[(info[r].time_arrive, info[r].time_leave_prev, Station.objects.values_list('name', flat=True).get(id=r),
+               info[r].line_prev, info[r].fee) for r in route],
+        columns=['Arrive time', 'Leave time', 'Station', 'Line', 'Fee'])
+    values2shift = ['Leave time', 'Line', 'Fee']
+    df[values2shift] = df[values2shift].shift(-1)
+    return df
 
 
 @dataclass

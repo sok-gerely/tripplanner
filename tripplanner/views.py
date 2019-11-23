@@ -9,6 +9,7 @@ from tripplanner.planning_alg import plan, NoRouteExists, StationsAreTheSame, Pl
 from tripplanner import models
 from tripplanner import constants
 
+
 def result(request, planning_mode_str: str, date_str: str, time_str: str, station_from_name: str, station_to_name: str):
     try:
         planning_mode = PlanningMode(planning_mode_str)
@@ -16,15 +17,15 @@ def result(request, planning_mode_str: str, date_str: str, time_str: str, statio
         raise Http404('Planning mode in not valid!')
     start_station = get_object_or_404(models.Station, name=station_from_name)
     destination_station = get_object_or_404(models.Station, name=station_to_name)
-    start_datetime = datetime.datetime.strptime(f'{date_str} {time_str}', f'{constants.date_fromat} {constants.time_format}')
-    print(start_datetime)
+    start_datetime = datetime.datetime.strptime(f'{date_str} {time_str}',
+                                                f'{constants.date_fromat} {constants.time_format}')
     try:
-        gen = plan(planning_mode, start_datetime, start_station, destination_station)
+        df = plan(planning_mode, start_datetime, start_station, destination_station)
     except NoRouteExists:
         return HttpResponse("Route doesn't exist")
     except StationsAreTheSame:
         return HttpResponse("The start and destination can't be the same!")
-    return HttpResponse('<br>'.join(f'{l} {t} --> {a}, {s} - {f}' for a, s, t, l, f in gen))
+    return render(request, 'tripplanner/result.html', {'table': df.to_html()})
 
 
 def index(request):
