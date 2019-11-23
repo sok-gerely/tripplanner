@@ -7,23 +7,41 @@
 <body>
 <form action="{% url 'redirect2result' %}" method="get">
 {#    {% csrf_token %}#}
-    <select name="planning_mode">
-        {% for mode in modes %}
-        <option value="{{ mode.value }}">{{ mode }}</option>
-        {% endfor %}
-    </select>
-    <select name="start_station">
-        {% for station in stations %}
-        <option value="{{ station.name }}">{{ station.name }}</option>
-        {% endfor %}
-    </select>
-    <select name="destination_station">
-        {% for station in stations %}
-        <option value="{{ station.name }}">{{ station.name }}</option>
-        {% endfor %}
-    </select>
-    <input type="time" name="time" value="10:00">
-    <input type="submit" value="Plan!">
+    <h2 align="center">Plan your trip!</h2>
+    <div align="center">
+        <p>Plan based on:
+            <select name="planning_mode">
+                {% for mode in modes %}
+                <option value="{{ mode.value }}">{{ mode }}</option>
+                {% endfor %}
+            </select>
+        </p>
+    </div>
+    <div align="center">
+        <p>From station:
+            <select name="start_station">
+                {% for station in stations %}
+                <option value="{{ station.name }}">{{ station.name }}</option>
+                {% endfor %}
+            </select>
+        </p>
+    </div>
+    <div align="center">
+        <p>To station:
+                <select name="destination_station">
+                    {% for station in stations %}
+                    <option value="{{ station.name }}">{{ station.name }}</option>
+                    {% endfor %}
+                </select>
+        </p>
+    </div>
+    <div align="center">
+        <p>When?
+            <input type="time" name="time" value={% now "H:i" %}>
+            <input type="submit" value="Plan!">
+        </p>
+    </div>
+    
 </form>
 </body>
 </html>
