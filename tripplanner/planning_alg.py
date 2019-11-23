@@ -26,11 +26,11 @@ class PlanningMode(Enum):
 
     def get_weight_fnc(self):
         if self == PlanningMode.DISTANCE:
-            return get_cost_distance
+            return get_weight_distance
         elif self == PlanningMode.COST:
-            return get_cost_cost
+            return get_weight_cost
         elif self == PlanningMode.TIME:
-            return get_cost_time
+            return get_weight_time
         else:
             raise NotImplementedError()
 
@@ -80,9 +80,9 @@ class RouteInfo:
 
 
 class Dijkstra:
-    def __init__(self, get_cost) -> None:
+    def __init__(self, get_weight) -> None:
         super().__init__()
-        self.get_cost: Callable[[int, datetime.time], List[NeighbourResult]] = get_cost
+        self.get_weight: Callable[[WeightArgs], float] = get_weight
 
     def __call__(self, start_station: int, start_time: datetime.datetime):
         Q = list(Station.objects.values_list('id', flat=True))
@@ -98,7 +98,7 @@ class Dijkstra:
                 break
             Q.remove(u)
 
-            neighbors = get_neighbors(u, info[u].time_arrive, self.get_cost)
+            neighbors = self.get_neighbors(u, info[u].time_arrive)
             for res in neighbors:
                 alt = dist[u] + res.cost
                 if alt < dist[res.v]:
@@ -118,6 +118,34 @@ class Dijkstra:
                 min_d = d
                 min_u = u
         return min_u
+
+    def get_neighbors(self, u, t: datetime.datetime):
+        station_service = StationOrder.objects.filter(station_from=u).values_list(
+            'station_to', 'distance', 'line__name', 'line__service', 'line__service__fee')
+
+        res = []
+        for v, distance, line__name, service, fee in station_service:
+            query_t = t
+            while True:
+                timetabledata_type = datetime2TimetableData_TYPE(query_t)
+                get_station_datetime = lambda s: \
+                    datetime.datetime.combine(query_t.date(),
+                                              TimetableData.objects.get(service=service, station=s,
+                                                                        type=timetabledata_type).date_time)
+                try:
+                    v_arrive_time = get_station_datetime(v)
+                    u_leave_time = get_station_datetime(u)
+                    if u_leave_time >= t:
+                        res.append(NeighbourResult(v=v, cost=self.get_weight(
+                            WeightArgs(distance=distance, fee=fee, v_arrive_time=v_arrive_time, t=t)),
+                                                   line_name=line__name,
+                                                   u_leave_time=u_leave_time, v_arrive_time=v_arrive_time, fee=fee))
+                        break
+                    else:
+                        raise TimetableData.DoesNotExist
+                except TimetableData.DoesNotExist:
+                    query_t = (query_t + datetime.timedelta(days=1)).replace(hour=0, minute=0, microsecond=0)
+        return res
 
 
 def is_weekend(t: datetime.datetime):
@@ -145,44 +173,16 @@ class WeightArgs:
     t: datetime.datetime
 
 
-def get_cost_distance(args: WeightArgs):
+def get_weight_distance(args: WeightArgs):
     return args.distance
 
 
-def get_cost_cost(args: WeightArgs):
+def get_weight_cost(args: WeightArgs):
     return args.fee
 
 
-def get_cost_time(args: WeightArgs):
+def get_weight_time(args: WeightArgs):
     return (args.v_arrive_time - args.t).total_seconds()
-
-
-def get_neighbors(u, t: datetime.datetime, get_cost):
-    station_service = StationOrder.objects.filter(station_from=u).values_list(
-        'station_to', 'distance', 'line__name', 'line__service', 'line__service__fee')
-
-    res = []
-    for v, distance, line__name, service, fee in station_service:
-        query_t = t
-        while True:
-            timetabledata_type = datetime2TimetableData_TYPE(query_t)
-            get_station_datetime = lambda s: \
-                datetime.datetime.combine(query_t.date(),
-                                          TimetableData.objects.get(service=service, station=s,
-                                                                    type=timetabledata_type).date_time)
-            try:
-                v_arrive_time = get_station_datetime(v)
-                u_leave_time = get_station_datetime(u)
-                if u_leave_time >= t:
-                    res.append(NeighbourResult(v=v, cost=get_cost(
-                        WeightArgs(distance=distance, fee=fee, v_arrive_time=v_arrive_time, t=t)), line_name=line__name,
-                                               u_leave_time=u_leave_time, v_arrive_time=v_arrive_time, fee=fee))
-                    break
-                else:
-                    raise TimetableData.DoesNotExist
-            except TimetableData.DoesNotExist:
-                query_t = (query_t + datetime.timedelta(days=1)).replace(hour=0, minute=0, microsecond=0)
-    return res
 
 
 def time2datetime(t: datetime.time):
