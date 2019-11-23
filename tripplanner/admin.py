@@ -18,6 +18,7 @@ class TimetableDataInline(admin.TabularInline):
     readonly_fields=('station',)
     fields=('station','date_time',)
     extra = 0
+    max_num = model.station_num
     can_delete = False
 
 class DelayInline(admin.TabularInline):

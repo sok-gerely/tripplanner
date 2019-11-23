@@ -88,7 +88,10 @@ class Service(models.Model):
         timetable_stations = TimetableData.objects.filter(service=self).values_list('station','id')
         for tt_station, tt_id in timetable_stations:
             if tt_station not in comp_stations:
-                TimetableData.objects.filter(id=tt_id).delete()
+                TimetableData.objects.get(id=tt_id).delete()
+            else:
+                tt = TimetableData.objects.get(id=tt_id)
+                tt.station_num = len(comp_stations)
 
     def update_timetables(self,compare_stations):
         for temp_station in compare_stations:
@@ -110,7 +113,8 @@ class Service(models.Model):
 
 class TimetableDataManager(models.Manager):
     def create_timetable(self, service, station, station_num):
-        timetable = self.create(service=service,station=station,station_num=station_num)
+        timetable = self.create(service=service,station=station)
+        timetable.station_num = station_num
         return timetable
 
 class TimetableData(models.Model):
@@ -118,7 +122,7 @@ class TimetableData(models.Model):
     station = models.ForeignKey(Station, on_delete=models.CASCADE)
     date_time = models.TimeField(default=datetime.datetime.now)
     objects = TimetableDataManager()
-    station_num = models.IntegerField(default=0)
+    station_num = 0
 
     def __str__(self):
         return f'{self.service.line} ({self.station}): {self.date_time}'
