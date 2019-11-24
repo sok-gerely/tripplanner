@@ -11,6 +11,11 @@ class StationOrderInline(admin.TabularInline):
 class ServiceInline(admin.TabularInline):
     model=Service
     extra=0
+    show_change_link=True
+
+class DelayInline(admin.TabularInline):
+    model=Delay
+    extra=0
 
 class TimetableDataInline(admin.TabularInline):
     model=TimetableData
@@ -20,10 +25,8 @@ class TimetableDataInline(admin.TabularInline):
     extra = 0
     max_num = model.station_num
     can_delete = False
+    show_change_link=True
 
-class DelayInline(admin.TabularInline):
-    model=Delay
-    extra=0
 
 class LineAdmin(admin.ModelAdmin):
     inlines=[
