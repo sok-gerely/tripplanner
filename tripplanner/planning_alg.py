@@ -132,11 +132,11 @@ class Dijkstra:
         for v, distance, line__name, service, fee in station_service:
             query_t = t
             while True:
-                timetabledata_type = datetime2TimetableData_TYPE(query_t)
+                timetabledata_type = datetime2ServiceTYPE(query_t)
                 get_station_datetime = lambda s: \
                     datetime.datetime.combine(query_t.date(),
                                               TimetableData.objects.get(service=service, station=s,
-                                                                        type=timetabledata_type).date_time)
+                                                                        service__type=timetabledata_type).date_time)
                 try:
                     v_arrive_time = get_station_datetime(v)
                     u_leave_time = get_station_datetime(u)
@@ -163,13 +163,13 @@ def is_holiday(t: datetime.datetime):
     return t in CALENDAR
 
 
-def datetime2TimetableData_TYPE(t: datetime.datetime):
+def datetime2ServiceTYPE(t: datetime.datetime):
     if is_weekend(t):
-        return TimetableData.WEEKEND
+        return Service.WEEKEND
     elif is_holiday(t):
-        return TimetableData.HOLIDAY
+        return Service.HOLIDAY
     else:
-        return TimetableData.NORMAL
+        return Service.NORMAL
 
 
 @dataclass
