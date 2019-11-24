@@ -1,3 +1,4 @@
+import pandas as pd
 import json
 
 from django.http import HttpResponse, Http404
@@ -24,11 +25,43 @@ def result(request, planning_mode_str: str, date_str: str, time_str: str, statio
         # ['Arrive time', 'Leave time', 'Station', 'Line', 'Fee']
         df['prev line'] = df['Line'].shift(1)
         df['Middle Station'] = df['prev line'] == df['Line']
+        ends_df = df[~df['Middle Station']]
+        middles_df = df[df['Middle Station']]
+        endpoints_df = pd.DataFrame({'Start station': ends_df['Station'][:-1],
+                                     'End station': ends_df['Station'].shift(-1)[:-1],
+                                     'Start time': ends_df['Leave time'][:-1],
+                                     'End time': ends_df['Arrive time'].shift(-1)[:-1],
+                                     'Start index': ends_df.index[:-1],
+                                     'End index': ends_df.index[1:]})
+        middles_zips = []
+        for _, row in endpoints_df[['Start index', 'End index']].iterrows():
+            df = middles_df[(row['Start index'] <= middles_df.index) & (middles_df.index <= row['End index'])]
+            middles_zips.append(middlesdf2list(df))
     except NoRouteExists:
         return HttpResponse("Route doesn't exist")
     except StationsAreTheSame:
         return HttpResponse("The start and destination can't be the same!")
-    return render(request, 'tripplanner/result.html', {'table': df.to_html()})
+
+    data = endpointsdf2list(endpoints_df)
+    data.append(middles_zips)
+    return render(request, 'tripplanner/result.html',
+                  {'data': zip(*data)})
+
+
+def format_datetime(t):
+    return t.strftime(f'{constants.time_format} {constants.date_fromat}')
+
+
+def middlesdf2list(df):
+    return zip(df['Leave time'].apply(format_datetime).to_list(),
+               df['Station'].to_list())
+
+
+def endpointsdf2list(df):
+    return [df['Start time'].apply(format_datetime).to_list(),
+            df['End time'].apply(format_datetime).to_list(),
+            df['Start station'].to_list(),
+            df['End station'].to_list()]
 
 
 def index(request):

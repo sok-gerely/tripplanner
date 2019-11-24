@@ -1,3 +1,24 @@
 {% extends "tripplanner/master.html" %}
+{% load static %}
 
-{% block html_content %}{{ table|safe }}{% endblock %}
+{% block html_content %}
+    <ul class="collapsible expandable">
+    {% for i in data %}
+        <li>
+            <div class="collapsible-header">
+                {{ i.0 }} {{ i.2 }}<br>
+                {{ i.1 }} {{ i.3 }}
+            </div>
+            <div class="collapsible-body">
+                <b>{{ i.0 }} {{ i.2 }}</b><br>
+                {% for ii in i.4 %}
+                    {{ ii.0 }} {{ ii.1 }} <br>
+                {% endfor %}
+                <b>{{ i.1 }} {{ i.3 }}</b>
+            </div>
+        </li>
+    {% endfor %}
+    </ul>
+{% endblock %}
+
+{% block js_import %}<script type="text/javascript" src="{% static 'tripplanner/js/result.js' %}"></script>{% endblock %}

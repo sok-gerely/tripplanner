@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!--Import materialize.css-->
     <link type="text/css" rel="stylesheet" href="{% static 'tripplanner/css/materialize.min.css' %}"  media="screen,projection"/>
+    <link type="text/css" rel="stylesheet" href="{% static 'tripplanner/css/mycss.css' %}"  media="screen,projection"/>
 
     <meta charset="UTF-8">
     <!--Let browser know websit is optimized for mobile-->
@@ -18,7 +19,7 @@
     {% block html_content %}{% endblock %}
 </div>
 <script type="text/javascript" src="{% static 'tripplanner/js/materialize.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'tripplanner/js/myscript.js' %}"></script>
+<script type="text/javascript" src="{% static 'tripplanner/js/planning.js' %}"></script>
 {% block js_import %}{% endblock %}
 <script type="text/javascript">
     {% block js_script %}{% endblock %}
