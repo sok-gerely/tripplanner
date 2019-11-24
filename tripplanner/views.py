@@ -5,6 +5,7 @@ from django.http import HttpResponse, Http404
 import datetime
 
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import NoReverseMatch
 
 from tripplanner.planning_alg import plan, NoRouteExists, StationsAreTheSame, PlanningMode
 from tripplanner import models
@@ -15,7 +16,7 @@ def result(request, planning_mode_str: str, date_str: str, time_str: str, statio
     try:
         planning_mode = PlanningMode(planning_mode_str)
     except ValueError:
-        raise Http404('Planning mode in not valid!')
+        return render(request, 'tripplanner/error.html', {'message': "Planning mode in not valid!"})
     start_station = get_object_or_404(models.Station, name=station_from_name)
     destination_station = get_object_or_404(models.Station, name=station_to_name)
     start_datetime = datetime.datetime.strptime(f'{date_str} {time_str}',
@@ -38,14 +39,13 @@ def result(request, planning_mode_str: str, date_str: str, time_str: str, statio
             df = middles_df[(row['Start index'] <= middles_df.index) & (middles_df.index <= row['End index'])]
             middles_zips.append(middlesdf2list(df))
     except NoRouteExists:
-        return HttpResponse("Route doesn't exist")
+        return render(request, 'tripplanner/error.html', {'message': "Route doesn't exist!"})
     except StationsAreTheSame:
-        return HttpResponse("The start and destination can't be the same!")
+        return render(request, 'tripplanner/error.html', {'message': "The start and destination can't be the same!"})
 
     data = endpointsdf2list(endpoints_df)
     data.append(middles_zips)
-    return render(request, 'tripplanner/result.html',
-                  {'data': zip(*data)})
+    return render(request, 'tripplanner/result.html', {'data': zip(*data)})
 
 
 def format_datetime(t):
@@ -76,8 +76,11 @@ def index(request):
 
 
 def redirect2result(request):
-    return redirect(result, planning_mode_str=request.GET['planning_mode'],
-                    date_str=request.GET['date'],
-                    time_str=request.GET['time'],
-                    station_from_name=request.GET['start_station'],
-                    station_to_name=request.GET['destination_station'])
+    try:
+        return redirect(result, planning_mode_str=request.GET['planning_mode'],
+                        date_str=request.GET['date'],
+                        time_str=request.GET['time'],
+                        station_from_name=request.GET['start_station'],
+                        station_to_name=request.GET['destination_station'])
+    except NoReverseMatch:
+        return render(request, 'tripplanner/error.html', {'message': 'You have to fill all fields!'})
