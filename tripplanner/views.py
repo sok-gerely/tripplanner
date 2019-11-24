@@ -21,6 +21,9 @@ def result(request, planning_mode_str: str, date_str: str, time_str: str, statio
                                                 f'{constants.date_fromat} {constants.time_format}')
     try:
         df = plan(planning_mode, start_datetime, start_station, destination_station)
+        # ['Arrive time', 'Leave time', 'Station', 'Line', 'Fee']
+        df['prev line'] = df['Line'].shift(1)
+        df['Middle Station'] = df['prev line'] == df['Line']
     except NoRouteExists:
         return HttpResponse("Route doesn't exist")
     except StationsAreTheSame:

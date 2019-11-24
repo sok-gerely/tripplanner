@@ -140,6 +140,8 @@ class Dijkstra:
                 try:
                     v_arrive_time = get_station_datetime(v)
                     u_leave_time = get_station_datetime(u)
+                    if u_leave_time > v_arrive_time:
+                        v_arrive_time += datetime.timedelta(days=1)
                     if u_leave_time >= t:
                         res.append(NeighbourResult(v=v, cost=self.get_weight(
                             WeightArgs(distance=distance, fee=fee, v_arrive_time=v_arrive_time, t=t)),
