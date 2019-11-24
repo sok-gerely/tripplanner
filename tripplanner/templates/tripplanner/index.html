@@ -1,47 +1,53 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Plan a trip!</title>
-</head>
-<body>
-<form action="{% url 'redirect2result' %}" method="get">
-{#    {% csrf_token %}#}
-    <h2 align="center">Plan your trip!</h2>
-    <div align="center">
-        <p>Plan based on:
-            <select name="planning_mode">
-                {% for mode in modes %}
-                <option value="{{ mode.value }}">{{ mode }}</option>
-                {% endfor %}
-            </select>
-        </p>
+{% extends "tripplanner/master.html" %}
+{% load static %}
+{% block html_content %}
+<div class="row">
+<form class="col s12" action="{% url 'redirect2result' %}" method="get">
+<div class="row">
+    <div class="input-field col s12">
+        <select id="planning_mode" name="planning_mode">
+            {% for mode in modes %}
+            <option value="{{ mode.value }}">{{ mode }}</option>
+            {% endfor %}
+        </select>
+        <label for="planning_mode">Planning mode</label>
     </div>
-    <div align="center">
-        <p>From station:
-            <select name="start_station">
-                {% for station in stations %}
-                <option value="{{ station.name }}">{{ station.name }}</option>
-                {% endfor %}
-            </select>
-        </p>
+    <div class="row">
+        <div class="input-field col m6 s12">
+            <input id="start_station" name="start_station" type="text" class="autocomplete">
+            <label for="start_station">Start station</label>
+        </div>
+        <div class="input-field col m6 s12">
+            <input id="destination_station" name="destination_station" type="text" class="autocomplete">
+            <label for="destination_station">Destination station</label>
+        </div>
     </div>
-    <div align="center">
-        <p>To station:
-                <select name="destination_station">
-                    {% for station in stations %}
-                    <option value="{{ station.name }}">{{ station.name }}</option>
-                    {% endfor %}
-                </select>
-        </p>
+    <div class="row">
+        <div class="input-field col m6 s12">
+            <input id="date" name="date" type="text" class="datepicker" value="{{ today }}">
+            <label for="date">Date</label>
+        </div>
+        <div class="input-field col m6 s12">
+            <input id="time" name="time" type="text" class="timepicker" value="{{ time }}">
+            <label for="time">Time</label>
+        </div>
     </div>
-    <div align="center">
-        <p>When?
-            <input type="time" name="time" value={% now "H:i" %}>
-            <input type="submit" value="Plan!">
-        </p>
+    <div class="row">
+        <button class="btn waves-effect waves-light light-blue darken-4" type="submit" name="action" id="action">Plan!
+            <i class="material-icons right">send</i>
+        </button>
     </div>
-    
+</div>
 </form>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block js_import %}<script type="text/javascript" src="{% static 'tripplanner/js/planning.js' %}"></script>{% endblock %}
+
+{% block js_script%}
+  $(document).ready(function(){
+    $('input.autocomplete').autocomplete({
+      data: {% autoescape off %} {{ stations_json }} {% endautoescape %},
+    });
+  });
+{% endblock %}
