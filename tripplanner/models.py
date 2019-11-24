@@ -15,6 +15,9 @@ class Line(models.Model):
     name = models.CharField(max_length=30, unique=True)
     station_list = []
 
+    def get_station_list(self):
+        return self.station_list
+
     def update_station_list(self):
         ret_stations = []
         service_stations = StationOrder.objects.filter(line=self).values_list('station_from','station_to')
@@ -64,11 +67,6 @@ class StationOrder(models.Model):
     def __str__(self):
         return f'{self.station_from} -> {self.station_to};'
 
-"""
-@receiver([post_save, post_delete],sender=StationOrder)
-def update(sender,instance,**kwargs):
-    sender.line.update()
-"""
 
 class Service(models.Model):
     fee = models.IntegerField(default=1)
@@ -83,6 +81,13 @@ class Service(models.Model):
                     (HOLIDAY, 'holiday')]
 
     type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=NORMAL)
+
+    def save(self, *args, **kwargs):
+        is_adding = self._state.adding
+        super().save(*args,**kwargs)
+        if is_adding:
+            self.line.update_station_list()
+            self.update_timetables(self.line.get_station_list())
 
     def check_to_delete(self,comp_stations):
         timetable_stations = TimetableData.objects.filter(service=self).values_list('station','id')

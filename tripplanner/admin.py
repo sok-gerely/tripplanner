@@ -1,7 +1,12 @@
 from django.contrib import admin
-
-
 from .models import Station,Line,StationOrder,Service,TimetableData,Delay
+from django.forms.models import ModelForm
+
+class AlwaysChangedModelForm(ModelForm):
+    def has_changed(self):
+        """ Should returns True if data differs from initial. 
+        By always returning true even unchanged inlines will get validated and saved."""
+        return True
 
 class StationOrderInline(admin.TabularInline):
     model=StationOrder
@@ -12,6 +17,7 @@ class ServiceInline(admin.TabularInline):
     model=Service
     extra=0
     show_change_link=True
+    form = AlwaysChangedModelForm
 
 class DelayInline(admin.TabularInline):
     model=Delay
