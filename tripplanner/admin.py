@@ -1,6 +1,10 @@
 from django.contrib import admin
 from .models import Station,Line,StationOrder,Service,TimetableData,Delay
 from django.forms.models import ModelForm
+from django.contrib.auth.models import Group,User
+
+admin.site.unregister(Group)
+admin.site.unregister(User)
 
 class AlwaysChangedModelForm(ModelForm):
     def has_changed(self):
@@ -53,7 +57,5 @@ class TimetableDataAdmin(admin.ModelAdmin):
 
 admin.site.register(Station)
 admin.site.register(Line,LineAdmin)
-admin.site.register(StationOrder)
 admin.site.register(Service,ServiceAdmin)
 admin.site.register(TimetableData,TimetableDataAdmin)
-admin.site.register(Delay)
