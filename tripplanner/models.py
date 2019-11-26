@@ -132,6 +132,15 @@ class TimetableData(models.Model):
     def __str__(self):
         return f'{self.service.line} ({self.station}): {self.date_time}'
 
+    def get_delay(self, date: datetime.date):
+        try:
+            return self.delay_set.get(date=date).delay
+        except Delay.DoesNotExist:
+            return datetime.timedelta(0)
+
+    def get_actual_datetime(self, date: datetime.date):
+        return datetime.datetime.combine(date, self.date_time) + self.get_delay(date)
+
 class Delay(models.Model):
     timetable = models.ForeignKey(TimetableData, on_delete=models.CASCADE)
     delay = models.DurationField(default=datetime.timedelta)

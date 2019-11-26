@@ -134,9 +134,8 @@ class Dijkstra:
             while True:
                 timetabledata_type = datetime2ServiceTYPE(query_t)
                 get_station_datetime = lambda s: \
-                    datetime.datetime.combine(query_t.date(),
-                                              TimetableData.objects.get(service=service, station=s,
-                                                                        service__type=timetabledata_type).date_time)
+                    TimetableData.objects.get(service=service, station=s,
+                                              service__type=timetabledata_type).get_actual_datetime(query_t.date())
                 try:
                     v_arrive_time = get_station_datetime(v)
                     u_leave_time = get_station_datetime(u)
