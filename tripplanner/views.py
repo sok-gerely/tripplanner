@@ -33,10 +33,13 @@ def result(request, planning_mode_str: str, date_str: str, time_str: str, statio
                                      'Start time': ends_df['Leave time'][:-1],
                                      'End time': ends_df['Arrive time'].shift(-1)[:-1],
                                      'Start index': ends_df.index[:-1],
-                                     'End index': ends_df.index[1:]})
+                                     'End index': ends_df.index[1:],
+                                     'Fee': ends_df['Fee'][:-1],
+                                     'Line': ends_df['Line'][:-1]})
         middles_zips = []
-        for _, row in endpoints_df[['Start index', 'End index']].iterrows():
+        for i, row in endpoints_df[['Start index', 'End index']].iterrows():
             df = middles_df[(row['Start index'] <= middles_df.index) & (middles_df.index <= row['End index'])]
+            endpoints_df.at[i, 'Fee'] *= df.shape[0] + 1
             middles_zips.append(middlesdf2list(df))
     except NoRouteExists:
         return render(request, 'tripplanner/error.html', {'message': "Route doesn't exist!"})
@@ -45,7 +48,7 @@ def result(request, planning_mode_str: str, date_str: str, time_str: str, statio
 
     data = endpointsdf2list(endpoints_df)
     data.append(middles_zips)
-    return render(request, 'tripplanner/result.html', {'data': zip(*data)})
+    return render(request, 'tripplanner/result.html', {'data': zip(*data), 'total_cost': endpoints_df['Fee'].sum()})
 
 
 def format_datetime(t):
@@ -61,7 +64,9 @@ def endpointsdf2list(df):
     return [df['Start time'].apply(format_datetime).to_list(),
             df['End time'].apply(format_datetime).to_list(),
             df['Start station'].to_list(),
-            df['End station'].to_list()]
+            df['End station'].to_list(),
+            df['Fee'].to_list(),
+            df['Line'].to_list()]
 
 
 def index(request):
