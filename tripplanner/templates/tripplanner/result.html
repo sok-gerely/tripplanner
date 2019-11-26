@@ -7,7 +7,7 @@
         {% for i in data %}
             <li>
                 <div class="collapsible-header">
-                    <table style="width: 80%">
+                    <table style="width: auto">
                         <tr>
                             <td>{{ i.0 }}</td>
                             <td>{{ i.2 }}</td>
@@ -42,8 +42,8 @@
         {% endfor %}
     </ul>
 
-    <h3 class="right-align">Total cost: {{ total_cost }}{{ CURRENCY }}</h3>
     <h3 class="right-align">Total travel time: {{ total_time }}</h3>
+    <h3 class="right-align">Total cost: {{ total_cost }}{{ CURRENCY }}</h3>
 {% endblock %}
 
 {% block js_import %}
