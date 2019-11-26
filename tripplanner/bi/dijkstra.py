@@ -53,7 +53,7 @@ class Dijkstra:
         return dist, info
 
     @staticmethod
-    def __update_info(info: Dict[int, RouteInfo], res: Dijkstra.NeighbourResult, u: int):
+    def __update_info(info: Dict[int, RouteInfo], res: 'Dijkstra.NeighbourResult', u: int):
         info[res.v].prev = u
         info[res.v].time_arrive = res.v_arrive_time
         info[res.v].time_leave_prev = res.u_leave_time
@@ -70,7 +70,7 @@ class Dijkstra:
                 min_u = u
         return min_u
 
-    def __get_neighbors(self, u: int, t: datetime.datetime) -> Dijkstra.NeighbourResult:
+    def __get_neighbors(self, u: int, t: datetime.datetime) -> 'Dijkstra.NeighbourResult':
         station_service = StationOrder.objects.filter(station_from=u).values_list(
             'station_to', 'distance', 'line__name', 'line__service', 'line__service__fee')
 
