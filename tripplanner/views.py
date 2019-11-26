@@ -36,6 +36,8 @@ def result(request, planning_mode_str: str, date_str: str, time_str: str, statio
                                      'End index': ends_df.index[1:],
                                      'Fee': ends_df['Fee'][:-1],
                                      'Line': ends_df['Line'][:-1]})
+        endpoints_df['Travel time'] = (endpoints_df['End time'] - endpoints_df['Start time'])  # .apply(
+        # lambda x: f'{x.hour}')##.time().strptime(f'{time_str}'))
         middles_zips = []
         for i, row in endpoints_df[['Start index', 'End index']].iterrows():
             df = middles_df[(row['Start index'] <= middles_df.index) & (middles_df.index <= row['End index'])]
@@ -48,7 +50,9 @@ def result(request, planning_mode_str: str, date_str: str, time_str: str, statio
 
     data = endpointsdf2list(endpoints_df)
     data.append(middles_zips)
-    return render(request, 'tripplanner/result.html', {'data': zip(*data), 'total_cost': endpoints_df['Fee'].sum()})
+    return render(request, 'tripplanner/result.html',
+                  {'data': zip(*data), 'total_cost': endpoints_df['Fee'].sum(),
+                   'total_time': endpoints_df['End time'].iloc[-1] - endpoints_df.at[0, 'Start time']})
 
 
 def format_datetime(t):
@@ -66,7 +70,8 @@ def endpointsdf2list(df):
             df['Start station'].to_list(),
             df['End station'].to_list(),
             df['Fee'].to_list(),
-            df['Line'].to_list()]
+            df['Line'].to_list(),
+            df['Travel time'].to_list()]
 
 
 def index(request):

@@ -1,45 +1,50 @@
 {% extends "tripplanner/master.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block html_content %}
     <ul class="collapsible expandable">
-    {% for i in data %}
-        <li>
-            <div class="collapsible-header">
-                <table style="width: 80%">
-                    <tr>
-                        <td>{{ i.0 }}</td>
-                        <td>{{ i.2 }}</td>
-                    </tr>
-                    <tr>
-                        <td>{{ i.1 }}</td>
-                        <td>{{ i.3 }}</td>
-                    </tr>
-                </table><span class="badge" style="text-align: right">{{ i.5 }}<br>Fee: {{ i.4 }}{{ CURRENCY }}</span>
-            </div>
-            <div class="collapsible-body">
-                <table class="striped">
-                    <tr class="teal darken-1">
-                        <td>{{ i.0 }}</td>
-                        <td>{{ i.2 }}</td>
-                    </tr>
-                    {% for ii in i.6 %}
-                    <tr>
-                        <td>{{ ii.0 }}</td>
-                        <td>{{ ii.1 }}</td>
-                    </tr>
-                    {% endfor %}
-                    <tr class="teal darken-1">
-                        <td>{{ i.1 }}</td>
-                        <td>{{ i.3 }}</td>
-                    </tr>
-                </table>
-            </div>
-        </li>
-    {% endfor %}
+        {% for i in data %}
+            <li>
+                <div class="collapsible-header">
+                    <table style="width: 80%">
+                        <tr>
+                            <td>{{ i.0 }}</td>
+                            <td>{{ i.2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>{{ i.1 }}</td>
+                            <td>{{ i.3 }}</td>
+                        </tr>
+                    </table>
+                    <span class="badge" style="text-align: right">{{ i.5 }}<br>Fee:
+                        {{ i.4 }}{{ CURRENCY }}<br>Travel time: {{ i.6 }}</span>
+                </div>
+                <div class="collapsible-body">
+                    <table class="striped">
+                        <tr class="teal darken-1">
+                            <td>{{ i.0 }}</td>
+                            <td>{{ i.2 }}</td>
+                        </tr>
+                        {% for ii in i.7 %}
+                            <tr>
+                                <td>{{ ii.0 }}</td>
+                                <td>{{ ii.1 }}</td>
+                            </tr>
+                        {% endfor %}
+                        <tr class="teal darken-1">
+                            <td>{{ i.1 }}</td>
+                            <td>{{ i.3 }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </li>
+        {% endfor %}
     </ul>
 
     <h3 class="right-align">Total cost: {{ total_cost }}{{ CURRENCY }}</h3>
+    <h3 class="right-align">Total travel time: {{ total_time }}</h3>
 {% endblock %}
 
-{% block js_import %}<script type="text/javascript" src="{% static 'tripplanner/js/result.js' %}"></script>{% endblock %}
+{% block js_import %}
+    <script type="text/javascript" src="{% static 'tripplanner/js/result.js' %}"></script>{% endblock %}
