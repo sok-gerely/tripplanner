@@ -111,6 +111,10 @@ class Service(models.Model):
                 for tt in tts:
                     tt.station_num = len(compare_stations)
 
+    def departure_time(self):
+        date_times = self.timetabledata_set.order_by("date_time")
+        if len(date_times) > 0: return f'{date_times[0].date_time}'
+        else: return ""
 
     def __str__(self):
         date_times = self.timetabledata_set.order_by("date_time")

@@ -43,19 +43,28 @@ class LineAdmin(admin.ModelAdmin):
         ServiceInline,
         StationOrderInline,
         ]
+    list_display = ('name','type',)
+    list_filter = ('type',)
 
 class ServiceAdmin(admin.ModelAdmin):
     inlines=[
         TimetableDataInline,
         ]
+    list_display = ('line','departure_time','type','valid_from','valid_until','fee')
+    list_filter = ('line','type','valid_from','valid_until',)
 
 class TimetableDataAdmin(admin.ModelAdmin):
     inlines=[
         DelayInline,
     ]
     readonly_fields=('station',)
+    list_display = ('service','station','date_time',)
+    list_filter = ('service','station',)
 
-admin.site.register(Station)
+class StationAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+
+admin.site.register(Station,StationAdmin)
 admin.site.register(Line,LineAdmin)
 admin.site.register(Service,ServiceAdmin)
 admin.site.register(TimetableData,TimetableDataAdmin)
