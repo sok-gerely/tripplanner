@@ -1,3 +1,4 @@
+import modelclone
 from django.contrib import admin
 from django.contrib.auth.models import Group, User
 from django.forms.models import ModelForm, BaseInlineFormSet
@@ -39,7 +40,7 @@ class StationOrderInline(admin.TabularInline):
     model = StationOrder
     fk_name = "line"
     exclude = ('station_to',)
-    extra = 0
+    extra = 2
     formset = StationOrderInlineFromSet
     # form = NameForm
 
@@ -67,8 +68,7 @@ class TimetableDataInline(admin.TabularInline):
     show_change_link = True
 
 
-class LineAdmin(admin.ModelAdmin):
-
+class LineAdmin(modelclone.ClonableModelAdmin):
     def get_inline_instances(self, request, obj=None):
         inlines_edit = [ServiceInline, ]
         inlines_create = inlines_edit + [StationOrderInline, ]
@@ -105,3 +105,5 @@ class StationAdmin(admin.ModelAdmin):
 
 admin.site.register(Station, StationAdmin)
 admin.site.register(Line, LineAdmin)
+admin.site.register(Service, ServiceAdmin)
+admin.site.register(TimetableData, TimetableDataAdmin)

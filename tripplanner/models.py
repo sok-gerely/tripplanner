@@ -78,8 +78,8 @@ class StationOrder(models.Model):
 class Service(models.Model):
     fee = models.IntegerField(default=1)
     line = models.ForeignKey(Line, on_delete=models.CASCADE)
-    valid_from = models.DateField(default=datetime.date.today)
-    valid_until = models.DateField(default=datetime.date.today)
+    valid_from = models.DateField(default=datetime.date.today())
+    valid_until = models.DateField(default=datetime.date.today() + datetime.timedelta(days=365))
     NORMAL = 'N'
     WEEKEND = 'W'
     HOLIDAY = 'H'
