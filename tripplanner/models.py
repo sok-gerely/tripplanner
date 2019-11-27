@@ -56,7 +56,7 @@ class StationOrder(models.Model):
     station_from = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='from+')
     station_to = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='to+')
     line = models.ForeignKey(Line, on_delete=models.CASCADE)
-    distance = models.IntegerField()
+    distance = models.IntegerField(null=True, default=0)
 
     def save(self, *args, **kwargs):
         created = not self.pk
@@ -69,7 +69,10 @@ class StationOrder(models.Model):
         self.line.deletion_update()
 
     def __str__(self):
-        return f'{self.station_from} -> {self.station_to};'
+        try:
+            return f'{self.station_from} - {self.distance} -> {self.station_to};'
+        except StationOrder.station_to.RelatedObjectDoesNotExist:
+            return f'{self.station_from}'
 
 
 class Service(models.Model):
