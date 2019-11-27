@@ -1,7 +1,5 @@
 from django.db import models
 import datetime
-from django.db.models.signals import post_save,post_delete
-from django.dispatch import receiver
 
 
 class Station(models.Model):
@@ -14,6 +12,12 @@ class Station(models.Model):
 class Line(models.Model):
     name = models.CharField(max_length=30, unique=True)
     station_list = []
+    BUS = 'B'
+    TRAIN = 'T'
+    TYPE_CHOICES = [(BUS, 'bus'),
+                    (TRAIN, 'train'),]
+
+    type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=TRAIN)
 
     def get_station_list(self):
         return self.station_list
@@ -107,6 +111,10 @@ class Service(models.Model):
                 for tt in tts:
                     tt.station_num = len(compare_stations)
 
+    def departure_time(self):
+        date_times = self.timetabledata_set.order_by("date_time")
+        if len(date_times) > 0: return f'{date_times[0].date_time}'
+        else: return ""
 
     def __str__(self):
         date_times = self.timetabledata_set.order_by("date_time")
