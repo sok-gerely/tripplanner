@@ -11,7 +11,7 @@ admin.site.unregister(User)
 
 class AlwaysChangedModelForm(ModelForm):
     def has_changed(self):
-        """ Should returns True if data differs from initial. 
+        """ Should returns True if data differs from initial.
         By always returning true even unchanged inlines will get validated and saved."""
         return True
 
@@ -40,7 +40,7 @@ class StationOrderInline(admin.TabularInline):
     model = StationOrder
     fk_name = "line"
     exclude = ('station_to',)
-    extra = 2
+    extra = 0
     formset = StationOrderInlineFromSet
     # form = NameForm
 
@@ -69,6 +69,7 @@ class TimetableDataInline(admin.TabularInline):
 
 
 class LineAdmin(modelclone.ClonableModelAdmin):
+
     def get_inline_instances(self, request, obj=None):
         inlines_edit = [ServiceInline, ]
         inlines_create = inlines_edit + [StationOrderInline, ]
@@ -105,5 +106,3 @@ class StationAdmin(admin.ModelAdmin):
 
 admin.site.register(Station, StationAdmin)
 admin.site.register(Line, LineAdmin)
-admin.site.register(Service, ServiceAdmin)
-admin.site.register(TimetableData, TimetableDataAdmin)
