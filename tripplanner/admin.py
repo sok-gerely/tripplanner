@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import Station,Line,StationOrder,Service,TimetableData,Delay
 from django.forms.models import ModelForm
 from django.contrib.auth.models import Group,User
+from merged_inlines.admin import MergedInlineAdmin
 
 admin.site.unregister(Group)
 admin.site.unregister(User)
@@ -13,9 +14,23 @@ class AlwaysChangedModelForm(ModelForm):
         return True
 
 class StationOrderInline(admin.TabularInline):
-    model=StationOrder
-    fk_name="line"
-    extra=0
+    model = StationOrder
+    fk_name = "line"
+    extra = 0
+    exclude = ('station_to',)
+
+class LastStationOrderInline(admin.TabularInline):
+    model = StationOrder
+    fk_name = "line"
+    extra = 0
+    fields = ('station_to',)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        line_id = qs.values_list('line')[0][0]
+        line = Line.objects.get(pk=line_id)
+        last_station = line.get_last_station()
+        return qs.filter(station_to=last_station)
 
 class ServiceInline(admin.TabularInline):
     model=Service
@@ -37,11 +52,14 @@ class TimetableDataInline(admin.TabularInline):
     can_delete = False
     show_change_link=True
 
+"""class MergedStationOrderInlines(MergedInlineAdmin):
+    inlines = [StationOrderInline, LastStationOrderInline,]"""
 
 class LineAdmin(admin.ModelAdmin):
     inlines=[
         ServiceInline,
         StationOrderInline,
+        LastStationOrderInline,
         ]
 
 class ServiceAdmin(admin.ModelAdmin):
@@ -54,6 +72,7 @@ class TimetableDataAdmin(admin.ModelAdmin):
         DelayInline,
     ]
     readonly_fields=('station',)
+
 
 admin.site.register(Station)
 admin.site.register(Line,LineAdmin)

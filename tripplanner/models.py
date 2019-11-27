@@ -1,7 +1,6 @@
 from django.db import models
 import datetime
-from django.db.models.signals import post_save,post_delete
-from django.dispatch import receiver
+
 
 
 class Station(models.Model):
@@ -14,8 +13,15 @@ class Station(models.Model):
 class Line(models.Model):
     name = models.CharField(max_length=30, unique=True)
     station_list = []
+    """TRAIN = 'T'
+    BUS = 'B'
+    TYPE_CHOICES = [(TRAIN, 'train'),
+                    (BUS, 'bus')]
 
+    type = models.CharField(max_length=1, choices=TYPE_CHOICES, default=TRAIN)"""
+    
     def get_station_list(self):
+        self.order_stations()
         return self.station_list
 
     def update_station_list(self):
@@ -25,6 +31,41 @@ class Line(models.Model):
             if(ind==0):ret_stations.append(from_station)
             ret_stations.append(to_station)
         self.station_list = ret_stations
+
+    def get_starting_station(self):
+        starting_station = None
+        self.update_station_list()
+        for station in self.station_list:
+            if StationOrder.objects.filter(line=self,station_from=station):
+                if not StationOrder.objects.filter(line=self,station_to=station):
+                    if starting_station is None: starting_station = station
+                    #else multiple starting stations-throw error
+        return starting_station
+
+    def get_next_station(self,station):
+        next_station = StationOrder.objects.filter(line=self,station_from=station).values_list('station_to')
+        #If there is a next station and is not ambiguous
+        if next_station.count() == 1:
+            return next_station[0]
+        #If there isn't a next station
+        elif next_station.count() == 0:
+            #else ambiguous
+            return None
+
+    def order_stations(self):
+        starting_station = self.get_starting_station()
+        if starting_station is not None:
+            #else throw error
+            ret_stations = [starting_station]
+            next_station = self.get_next_station(starting_station)
+            while(next_station):
+                ret_stations.append(next_station)
+                next_station = self.get_next_station(next_station)
+            self.station_list = ret_stations
+
+    def get_last_station(self):
+        self.order_stations()
+        return self.station_list[-1]
 
     def update_services(self):
         services = Service.objects.filter(line=self).all()
@@ -37,11 +78,11 @@ class Line(models.Model):
             service.check_to_delete(self.station_list)
 
     def update(self):
-        self.update_station_list()
+        self.order_stations()
         self.update_services()
 
     def deletion_update(self):
-        self.update_station_list()
+        self.order_stations()
         self.del_update_services()
 
     def __str__(self):
@@ -67,6 +108,16 @@ class StationOrder(models.Model):
     def __str__(self):
         return f'{self.station_from} -> {self.station_to};'
 
+"""class LineStation(Station):
+    class Meta:
+        proxy = True
+
+    line = models.ForeignKey(Line,on_delete=models.CASCADE)
+
+    def get_distance_to_next(self,line):
+        next_station = line.get_next_station(self)
+        distance = StationOrder.objects.filter(station_from=self,station_to=next_station).values_list('distance')[0]
+        return distance"""
 
 class Service(models.Model):
     fee = models.IntegerField(default=1)
@@ -86,7 +137,6 @@ class Service(models.Model):
         is_adding = self._state.adding
         super().save(*args,**kwargs)
         if is_adding:
-            self.line.update_station_list()
             self.update_timetables(self.line.get_station_list())
 
     def check_to_delete(self,comp_stations):
