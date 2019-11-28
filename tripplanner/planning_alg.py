@@ -125,13 +125,15 @@ def __middlesdf2zip(df: pd.DataFrame) -> TransposeMiddle:
 
 
 def _endpointsdf2list(df: pd.DataFrame) -> TransposeEndpoint:
+    types = [Line.objects.values_list('type', flat=True).get(name=l) for l in df['Line'].to_list()]
     return [df['Start time'].apply(format_datetime).to_list(),
             df['End time'].apply(format_datetime).to_list(),
             df['Start station'].to_list(),
             df['End station'].to_list(),
             df['Fee'].to_list(),
             df['Line'].to_list(),
-            df['Travel time'].to_list()]
+            df['Travel time'].to_list(),
+            types]
 
 
 def format_datetime(t):

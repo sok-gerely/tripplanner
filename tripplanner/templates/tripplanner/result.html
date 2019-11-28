@@ -18,7 +18,13 @@
                         </tr>
                     </table>
                     <span class="badge" style="text-align: right">
-                        <i class="tiny material-icons" style="text-align: right">directions_railway</i><br>
+                        <i class="tiny material-icons" style="text-align: right">
+                            {% if i.7 == 'T' %}
+                            directions_railway
+                            {% elif i.7 == 'B' %}
+                            directions_bus
+                            {% endif %}
+                        </i><br>
                         {{ i.5 }}<br>
                         Fee: {{ i.4 }}{{ CURRENCY }}<br>
                         Travel time: {{ i.6 }}
@@ -30,7 +36,7 @@
                             <td>{{ i.0 }}</td>
                             <td>{{ i.2 }}</td>
                         </tr>
-                        {% for ii in i.7 %}
+                        {% for ii in i.8 %}
                             <tr>
                                 <td>{{ ii.0 }}</td>
                                 <td>{{ ii.1 }}</td>
