@@ -57,7 +57,7 @@ class TimetableDataAdmin(admin.ModelAdmin):
     inlines=[
         DelayInline,
     ]
-    readonly_fields=('station',)
+    readonly_fields=('station','service',)
     list_display = ('service','station','date_time',)
     list_filter = ('service','station',)
     def has_add_permission(self, request, obj=None):
