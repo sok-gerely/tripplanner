@@ -60,6 +60,8 @@ class TimetableDataAdmin(admin.ModelAdmin):
     readonly_fields=('station',)
     list_display = ('service','station','date_time',)
     list_filter = ('service','station',)
+    def has_add_permission(self, request, obj=None):
+        return False
 
 class StationAdmin(admin.ModelAdmin):
     list_display = ('name',)
