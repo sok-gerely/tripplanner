@@ -68,7 +68,7 @@ class TimetableDataInline(admin.TabularInline):
     show_change_link = True
 
 
-class LineAdmin(modelclone.ClonableModelAdmin):
+class LineAdmin(admin.ModelAdmin):
 
     def get_inline_instances(self, request, obj=None):
         inlines_edit = [ServiceInline, ]
@@ -106,3 +106,5 @@ class StationAdmin(admin.ModelAdmin):
 
 admin.site.register(Station, StationAdmin)
 admin.site.register(Line, LineAdmin)
+admin.site.register(Service, ServiceAdmin)
+admin.site.register(TimetableData, TimetableDataAdmin)
