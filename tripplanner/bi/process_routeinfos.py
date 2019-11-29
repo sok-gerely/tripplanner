@@ -8,7 +8,17 @@ from tripplanner.bi.utils import format_datetime
 from tripplanner.models import Station, Line
 
 
-def routeinfos2df(start_station: Station, destination_station: Station, infos: RouteInfo) -> pd.DataFrame:
+def routeinfo2end_middlepoints(info, start_station, destination_station):
+    df = __routeinfos2df(start_station, destination_station, info)
+    endpoints_df = __split_df_to_middle_endpoints(df)
+    middles_list = __get_list_zip_of_middle(df, endpoints_df)
+    total_cost = endpoints_df['Fee'].sum()
+    total_time = endpoints_df['End time'].iloc[-1] - endpoints_df.at[0, 'Start time']
+    total_distance = endpoints_df['Distance'].sum()
+    return _endpointsdf2list(endpoints_df), middles_list, total_cost, total_time, total_distance
+
+
+def __routeinfos2df(start_station: Station, destination_station: Station, infos: RouteInfo) -> pd.DataFrame:
     route = [destination_station.id]
     while True:
         u = infos[route[-1]].prev
@@ -56,6 +66,7 @@ def __get_list_zip_of_middle(df: pd.DataFrame, endpoints_df: pd.DataFrame) -> Li
     for i, row in endpoints_df[['Start index', 'End index']].iterrows():
         df = middles_df[(row['Start index'] <= middles_df.index) & (middles_df.index <= row['End index'])]
         endpoints_df.at[i, 'Fee'] *= df.shape[0] + 1
+        endpoints_df.at[i, 'Distance'] += df['Distance'].sum()
         middles_list.append(__middlesdf2zip(df))
     return middles_list
 
@@ -77,4 +88,5 @@ def _endpointsdf2list(df: pd.DataFrame) -> TransposeEndpoint:
             df['Fee'].to_list(),
             df['Line'].to_list(),
             df['Travel time'].to_list(),
-            types]
+            types,
+            df['Distance'].to_list()]

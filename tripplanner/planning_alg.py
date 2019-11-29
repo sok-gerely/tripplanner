@@ -2,8 +2,8 @@ from enum import Enum
 from typing import List, Tuple
 
 from tripplanner.bi.dijkstra import Dijkstra, WeightArgs
-from tripplanner.bi.process_routeinfos import routeinfos2df, __split_df_to_middle_endpoints, __get_list_zip_of_middle, \
-    _endpointsdf2list, TransposeMiddle, TransposeEndpoint
+from tripplanner.bi.process_routeinfos import _endpointsdf2list, TransposeMiddle, TransposeEndpoint, \
+    routeinfo2end_middlepoints
 from tripplanner.models import *
 
 
@@ -58,12 +58,6 @@ def plan(planning_mode: PlanningMode, start_time: datetime.datetime, start_stati
     if info[destination_station.id].time_arrive is None:
         raise NoRouteExists()
 
-    df = routeinfos2df(start_station, destination_station, info)
-    endpoints_df = __split_df_to_middle_endpoints(df)
-    middles_list = __get_list_zip_of_middle(df, endpoints_df)
-    total_cost = endpoints_df['Fee'].sum()
-    total_time = endpoints_df['End time'].iloc[-1] - endpoints_df.at[0, 'Start time']
-    total_distance = endpoints_df['Distance'].sum()
-    return _endpointsdf2list(endpoints_df), middles_list, total_cost, total_time, total_distance
+    return routeinfo2end_middlepoints(info, start_station, destination_station)
 
 
