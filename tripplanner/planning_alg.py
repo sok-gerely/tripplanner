@@ -1,13 +1,10 @@
 from enum import Enum
-from typing import List, Tuple, Iterator
+from typing import List, Tuple
 
 from tripplanner.bi.dijkstra import Dijkstra, WeightArgs
 from tripplanner.bi.process_routeinfos import routeinfos2df, __split_df_to_middle_endpoints, __get_list_zip_of_middle, \
-    _endpointsdf2list
+    _endpointsdf2list, TransposeMiddle, TransposeEndpoint
 from tripplanner.models import *
-
-TransposeMiddle = Iterator[Tuple[datetime.datetime, Station]]
-TransposeEndpoint = List[List]
 
 
 class NoRouteExists(Exception):

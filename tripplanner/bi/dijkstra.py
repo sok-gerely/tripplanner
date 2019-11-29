@@ -49,7 +49,7 @@ class Dijkstra:
         super().__init__()
         self.get_weight = get_weight
 
-    def __call__(self, start_station: int, start_time: datetime.datetime) -> Dict[int, RouteStationInfo]:
+    def __call__(self, start_station: int, start_time: datetime.datetime) -> RouteInfo:
         stations = list(Station.objects.values_list('id', flat=True))
         dist = defaultdict(lambda: inf)
         info = RouteInfo(start_station, start_time)
@@ -68,7 +68,7 @@ class Dijkstra:
                 if alt < dist[res.v]:
                     dist[res.v] = alt
                     info.update(u, res)
-        return dist, info
+        return info
 
     @staticmethod
     def __get_stations_with_min_dist(stations: List[int], dist: Dict[int, float]):

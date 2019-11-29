@@ -1,11 +1,11 @@
-from typing import List
+import datetime
+from typing import List, Iterator, Tuple
 
 import pandas as pd
 
 from tripplanner.bi.dijkstra import RouteStationInfo, RouteInfo
 from tripplanner.bi.utils import format_datetime
 from tripplanner.models import Station, Line
-from tripplanner.planning_alg import TransposeMiddle, TransposeEndpoint
 
 
 def routeinfos2df(start_station: Station, destination_station: Station, infos: RouteInfo) -> pd.DataFrame:
@@ -47,6 +47,9 @@ def __get_endpoints_df(ends_df: pd.DataFrame) -> pd.DataFrame:
     return endpoints_df
 
 
+TransposeMiddle = Iterator[Tuple[datetime.datetime, Station]]
+
+
 def __get_list_zip_of_middle(df: pd.DataFrame, endpoints_df: pd.DataFrame) -> List[TransposeMiddle]:
     middles_df = df[df['Middle Station']]
     middles_list = []
@@ -60,6 +63,9 @@ def __get_list_zip_of_middle(df: pd.DataFrame, endpoints_df: pd.DataFrame) -> Li
 def __middlesdf2zip(df: pd.DataFrame) -> TransposeMiddle:
     return zip(df['Leave time'].apply(format_datetime).to_list(),
                df['Station'].to_list())
+
+
+TransposeEndpoint = List[List]
 
 
 def _endpointsdf2list(df: pd.DataFrame) -> TransposeEndpoint:
