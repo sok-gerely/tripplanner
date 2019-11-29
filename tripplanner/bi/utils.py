@@ -1,5 +1,6 @@
 import datetime
 
+from tripplanner import constants
 from tripplanner.models import Service
 from tripplannersite.settings import CALENDAR
 
@@ -19,3 +20,7 @@ def is_weekend(t: datetime.datetime):
 
 def is_holiday(t: datetime.datetime):
     return t in CALENDAR
+
+
+def format_datetime(t):
+    return t.strftime(f'{constants.time_format} {constants.date_fromat}')

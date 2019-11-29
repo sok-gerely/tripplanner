@@ -20,13 +20,14 @@ def result(request, planning_mode_str: str, date_str: str, time_str: str, statio
     start_datetime = datetime.datetime.strptime(f'{date_str} {time_str}',
                                                 f'{constants.date_fromat} {constants.time_format}')
     try:
-        endpoints_list, middles_list, total_cost, total_time = plan(planning_mode, start_datetime, start_station,
-                                                                    destination_station)
+        endpoints_list, middles_list, total_cost, total_time, total_distance = plan(planning_mode, start_datetime,
+                                                                                    start_station, destination_station)
         data = endpoints_list
         data.append(middles_list)
         return render(request, 'tripplanner/result.html',
                       {'data': zip(*data), 'total_cost': total_cost,
-                       'total_time': total_time})
+                       'total_time': total_time,
+                       'total_distance': total_distance})
     except NoRouteExists:
         return render(request, 'tripplanner/error.html', {'message': "Route doesn't exist!"})
     except StationsAreTheSame:

@@ -27,7 +27,8 @@
                         </i><br>
                         {{ i.5 }}<br>
                         Fee: {{ i.4 }}{{ CURRENCY }}<br>
-                        Travel time: {{ i.6 }}
+                        Travel time: {{ i.6 }}<br>
+                        Distance: {{ i.8 }}
                     </span>
                 </div>
                 <div class="collapsible-body">
@@ -36,7 +37,7 @@
                             <td>{{ i.0 }}</td>
                             <td>{{ i.2 }}</td>
                         </tr>
-                        {% for ii in i.8 %}
+                        {% for ii in i.9 %}
                             <tr>
                                 <td>{{ ii.0 }}</td>
                                 <td>{{ ii.1 }}</td>
@@ -54,6 +55,7 @@
 
     <h3 class="right-align">Total travel time: {{ total_time }}</h3>
     <h3 class="right-align">Total cost: {{ total_cost }}{{ CURRENCY }}</h3>
+    <h3 class="right-align">Total distance: {{ total_distance }}</h3>
 {% endblock %}
 
 {% block js_import %}
