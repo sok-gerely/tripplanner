@@ -65,7 +65,7 @@ def __get_list_zip_of_middle(df: pd.DataFrame, endpoints_df: pd.DataFrame) -> Li
     middles_list = []
     for i, row in endpoints_df[['Start index', 'End index']].iterrows():
         df = middles_df[(row['Start index'] <= middles_df.index) & (middles_df.index <= row['End index'])]
-        endpoints_df.at[i, 'Fee'] *= df.shape[0] + 1
+        endpoints_df.at[i, 'Fee'] += df['Fee'].sum()
         endpoints_df.at[i, 'Distance'] += df['Distance'].sum()
         middles_list.append(__middlesdf2zip(df))
     return middles_list

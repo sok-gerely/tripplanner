@@ -123,7 +123,7 @@ class Service(models.Model):
     def __str__(self):
         date_times = self.timetabledata_set.order_by("date_time")
         if len(date_times) > 0:
-            return f'{self.line} ({date_times[0].date_time}): {self.fee}'
+            return f'{self.line} ({date_times[0].date_time}): {self.type} {self.fee}'
         else:
             return f'{self.line} (): {self.fee}'
 
