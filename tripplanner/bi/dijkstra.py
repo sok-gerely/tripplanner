@@ -85,7 +85,8 @@ class Dijkstra:
             'station_to', 'distance', 'line__name', 'line__service', 'line__service__fee')
 
         res = []
-        for v, distance, line__name, service, fee in station_service:
+        for v, distance, line__name, service, km_fee in station_service:
+            fee = km_fee * distance
             query_t = t
             while True:
                 timetabledata_type = datetime2ServiceTYPE(query_t)

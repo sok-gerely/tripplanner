@@ -54,14 +54,14 @@ class Line(models.Model):
 
 class StationOrder(models.Model):
     station_from = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='from+')
-    station_to = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='to+')
+    station_to = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='to+', null=True)
     line = models.ForeignKey(Line, on_delete=models.CASCADE)
     distance = models.IntegerField(null=True, default=0)
 
     def save(self, *args, **kwargs):
         created = not self.pk
         super().save(*args,**kwargs)
-        if created:
+        if created and (self.station_to is not None):
             self.line.update()
 
     def delete(self, *args, **kwargs):
