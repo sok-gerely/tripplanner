@@ -54,3 +54,7 @@ def redirect2result(request):
                         station_to_name=request.GET['destination_station'])
     except NoReverseMatch:
         return render(request, 'tripplanner/error.html', {'message': 'You have to fill all fields!'})
+
+
+def error_404(request, exception):
+    return render(request, 'tripplanner/error.html', {'message': '404 - Page not found'})

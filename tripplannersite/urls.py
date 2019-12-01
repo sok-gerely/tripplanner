@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.conf.urls import handler404
 from tripplanner import views
 
 app_name = 'tripplanner'
@@ -24,3 +25,5 @@ urlpatterns = [
     path('<str:planning_mode_str>/<str:date_str>/<str:time_str>/<str:station_from_name>-<str:station_to_name>', views.result, name='result'),
     path('redirect2result', views.redirect2result, name='redirect2result')
 ]
+
+handler404 = views.error_404
