@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator
 from django.db import models
 import datetime
 
@@ -54,14 +55,14 @@ class Line(models.Model):
 
 class StationOrder(models.Model):
     station_from = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='from+')
-    station_to = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='to+')
+    station_to = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='to+', null=True)
     line = models.ForeignKey(Line, on_delete=models.CASCADE)
-    distance = models.IntegerField()
+    distance = models.IntegerField(null=True, default=0, validators=[MinValueValidator(0)])
 
     def save(self, *args, **kwargs):
         created = not self.pk
         super().save(*args,**kwargs)
-        if created:
+        if created and (self.station_to is not None):
             self.line.update()
 
     def delete(self, *args, **kwargs):
@@ -69,14 +70,17 @@ class StationOrder(models.Model):
         self.line.deletion_update()
 
     def __str__(self):
-        return f'{self.station_from} -> {self.station_to};'
+        try:
+            return f'{self.station_from} - {self.distance} -> {self.station_to};'
+        except StationOrder.station_to.RelatedObjectDoesNotExist:
+            return f'{self.station_from}'
 
 
 class Service(models.Model):
     fee = models.IntegerField(default=1)
     line = models.ForeignKey(Line, on_delete=models.CASCADE)
-    valid_from = models.DateField(default=datetime.date.today)
-    valid_until = models.DateField(default=datetime.date.today)
+    valid_from = models.DateField(default=datetime.date.today())
+    valid_until = models.DateField(default=datetime.date.today() + datetime.timedelta(days=365))
     NORMAL = 'N'
     WEEKEND = 'W'
     HOLIDAY = 'H'
@@ -139,6 +143,15 @@ class TimetableData(models.Model):
 
     def __str__(self):
         return f'{self.service.line} ({self.station}): {self.date_time}'
+
+    def get_delay(self, date: datetime.date):
+        try:
+            return self.delay_set.get(date=date).delay
+        except Delay.DoesNotExist:
+            return datetime.timedelta(0)
+
+    def get_actual_datetime(self, date: datetime.date):
+        return datetime.datetime.combine(date, self.date_time) + self.get_delay(date)
 
 class Delay(models.Model):
     timetable = models.ForeignKey(TimetableData, on_delete=models.CASCADE)
