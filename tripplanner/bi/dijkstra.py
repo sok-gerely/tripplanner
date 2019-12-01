@@ -5,7 +5,7 @@ from math import inf
 from typing import Callable, List, Dict
 
 from tripplanner.bi.utils import datetime2ServiceTYPE
-from tripplanner.models import Station, StationOrder, TimetableData
+from tripplanner.models import Station, StationOrder, TimetableData, Service
 
 
 @dataclass
@@ -81,13 +81,17 @@ class Dijkstra:
         return min_u
 
     def __get_neighbors(self, u: int, t: datetime.datetime) -> List['Dijkstra.NeighbourResult']:
-        station_service = StationOrder.objects.filter(station_from=u).values_list(
+        station_service = StationOrder.objects.filter(station_from=u, line__service__valid_until__gte=t).values_list(
             'station_to', 'distance', 'line__name', 'line__service', 'line__service__fee')
 
         res = []
         for v, distance, line__name, service, km_fee in station_service:
             fee = km_fee * distance
-            query_t = t
+            service_obj = Service.objects.get(pk=service)
+            if service_obj.is_valid_on(t.date()):
+                query_t = t
+            else:
+                query_t = datetime.datetime.combine(service_obj.valid_from, datetime.time.min)
             while True:
                 timetabledata_type = datetime2ServiceTYPE(query_t)
                 get_station_datetime = lambda s: \
