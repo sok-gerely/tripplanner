@@ -26,9 +26,9 @@
                             {% endif %}
                         </i><br>
                         {{ i.5 }}<br>
-                        Fee: {{ i.4 }}{{ CURRENCY }}<br>
+                        Fee: {{ i.4 }} {{ CURRENCY }}<br>
                         Travel time: {{ i.6 }}<br>
-                        Distance: {{ i.8 }}
+                        Distance: {{ i.8 }} {{ DISTANCE_MEASURE }}
                     </span>
                 </div>
                 <div class="collapsible-body">
@@ -54,8 +54,8 @@
     </ul>
 
     <h3 class="right-align">Total travel time: {{ total_time }}</h3>
-    <h3 class="right-align">Total cost: {{ total_cost }}{{ CURRENCY }}</h3>
-    <h3 class="right-align">Total distance: {{ total_distance }}</h3>
+    <h3 class="right-align">Total cost: {{ total_cost }} {{ CURRENCY }}</h3>
+    <h3 class="right-align">Total distance: {{ total_distance }} {{ DISTANCE_MEASURE }}</h3>
 {% endblock %}
 
 {% block js_import %}
